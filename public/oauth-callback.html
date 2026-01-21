@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth 登入中...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            color: white;
+            font-family: Arial, sans-serif;
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 背景動畫效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(33, 150, 243, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(156, 39, 176, 0.05) 0%, transparent 50%);
+            animation: backgroundFloat 25s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg) scale(1); 
+                opacity: 0.8;
+            }
+            25% { 
+                transform: translateY(-15px) rotate(0.5deg) scale(1.02); 
+                opacity: 1;
+            }
+            50% { 
+                transform: translateY(10px) rotate(-0.5deg) scale(0.98); 
+                opacity: 0.9;
+            }
+            75% { 
+                transform: translateY(-5px) rotate(0.3deg) scale(1.01); 
+                opacity: 0.95;
+            }
+        }
+
+        .loading-container {
+            text-align: center;
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <h2>登入中，請稍候...</h2>
+        <div style="margin: 20px 0;">
+            <div style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid #00bcd4; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        // 只在 callback 頁面執行
+        const url = new URL(window.location.href);
+        const stravaToken = url.searchParams.get('strava_token');
+        const localToken = localStorage.getItem('token');
+        if (stravaToken && localToken) {
+            // 解析 URL 參數獲取完整的 token 信息
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenData = {
+                strava_token: stravaToken,
+                strava_refresh_token: urlParams.get('refresh_token'),
+                strava_expires_at: urlParams.get('expires_at')
+            };
+            
+            console.log('Token data to save:', {
+                has_token: !!stravaToken,
+                has_refresh_token: !!urlParams.get('refresh_token'),
+                has_expires_at: !!urlParams.get('expires_at')
+            });
+            
+            // 保存完整的 Strava token 信息到服務器
+            fetch('/api/strava/save-token', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(tokenData)
+            })
+            .then(res => {
+                if (res.ok) {
+                    // 同時保存到本地存儲
+                    localStorage.setItem('strava_access_token', tokenData.strava_token);
+                    localStorage.setItem('strava_refresh_token', tokenData.strava_refresh_token);
+                    localStorage.setItem('strava_expires_at', tokenData.strava_expires_at);
+                    
+                    // 設置同步狀態
+                    localStorage.setItem('stravaSyncEnabled', 'true');
+                    
+                    // 同步 Strava 同步狀態到雲端
+                    fetch('/api/strava/update-sync-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localToken}`
+                        },
+                        body: JSON.stringify({ stravaSyncEnabled: true })
+                    }).then(() => {
+                        console.log('Strava 同步狀態已同步到雲端');
+                    }).catch(error => {
+                        console.error('同步 Strava 狀態到雲端失敗:', error);
+                    });
+                    
+                    // 跳轉到日曆頁面
+                    window.location.href = '../clendar/clendar.html';
+                } else {
+                    alert('Strava 授權失敗，請重試');
+                    window.location.href = '../clendar/clendar.html';
+                }
+            })
+            .catch(() => {
+                alert('Strava 授權失敗，請重試');
+                window.location.href = '../clendar/clendar.html';
+            });
+        } else {
+            alert('授權失敗，請重試');
+            window.location.href = '../clendar/clendar.html';
+        }
+    </script>
+</body>
+</html> 

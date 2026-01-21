@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課表選擇 Modal 完整滾動測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #fff;
+            padding-bottom: 120px;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        button {
+            background: #00bcd4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #00acc1;
+        }
+        .info {
+            background: #1e3a5f;
+            color: #64b5f6;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #2196f3;
+        }
+        .success {
+            background: #1b5e20;
+            color: #81c784;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #4caf50;
+        }
+        .warning {
+            background: #3e2723;
+            color: #ffb74d;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #ff9800;
+        }
+        
+        /* 模擬導航列 */
+        .mock-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 2000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        .mock-nav-item {
+            color: #666;
+            text-align: center;
+            font-size: 12px;
+            padding: 8px;
+        }
+        .mock-nav-item.active {
+            color: #00bcd4;
+        }
+        
+        /* 手機端課表 Modal 優化 */
+        @media (max-width: 500px) {
+            /* 手機端課表 Modal 優化 */
+            #scheduleModal {
+                padding: 1vh !important;
+            }
+            
+            #scheduleModal > div {
+                max-width: 98vw !important;
+                max-height: 98vh !important;
+                width: 98vw !important;
+            }
+            
+            /* 手機端按鈕優化 */
+            #scheduleModal button {
+                padding: 16px 20px !important;
+                font-size: 16px !important;
+                min-width: 110px !important;
+                font-weight: 600 !important;
+            }
+            
+            /* 手機端輸入框優化 */
+            #scheduleModal select {
+                padding: 16px 14px !important;
+                font-size: 16px !important;
+            }
+            
+            /* 手機端標籤優化 */
+            #scheduleModal label {
+                font-size: 16px !important;
+                margin-bottom: 10px !important;
+            }
+            
+            /* 手機端表單間距優化 */
+            #scheduleForm {
+                gap: 24px !important;
+                padding: 0 18px !important;
+            }
+            
+            /* 手機端等級介紹區域優化 */
+            #levelIntro {
+                min-height: 80px !important;
+                padding: 16px !important;
+                font-size: 14px !important;
+                margin-bottom: 20px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>課表選擇 Modal 完整滾動測試</h1>
+    
+    <div class="test-section">
+        <h2>改進說明</h2>
+        <div class="success">
+            <strong>✅ 新的設計理念：</strong>
+            <ul>
+                <li><strong>整體滾動</strong>：包括按鈕在內的所有內容都在同一個滾動區域</li>
+                <li><strong>避免遮擋</strong>：Modal 居中顯示，上下留有足夠空間</li>
+                <li><strong>簡化結構</strong>：不再分為固定區域和滾動區域</li>
+                <li><strong>響應式設計</strong>：在手機上佔用 98% 螢幕寬度和高度</li>
+            </ul>
+        </div>
+        <div class="info">
+            <strong>🔧 技術改進：</strong>
+            <ul>
+                <li>Modal 外層：<code>padding: 2vh</code> 確保不被導航列遮擋</li>
+                <li>Modal 內層：<code>max-height: calc(100vh - 4vh)</code> 適應螢幕高度</li>
+                <li>滾動區域：包含標題、表單和按鈕的整個內容區域</li>
+                <li>按鈕位置：在滾動內容的底部，可以滾動到</li>
+            </ul>
+        </div>
+        <div class="warning">
+            <strong>⚠️ 測試重點：</strong>
+            <ul>
+                <li>在手機上測試時，注意虛擬鍵盤彈出的影響</li>
+                <li>確保可以滾動到按鈕區域</li>
+                <li>檢查是否被底部導航列遮擋</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>功能測試</h2>
+        <button onclick="testScheduleModal()">打開課表選擇 Modal</button>
+        <button onclick="showDeviceInfo()">顯示設備信息</button>
+        <button onclick="simulateKeyboard()">模擬鍵盤彈出</button>
+        <button onclick="resetView()">重置視圖</button>
+    </div>
+
+    <div class="test-section">
+        <h2>設備信息</h2>
+        <div id="deviceInfo">點擊上方按鈕顯示設備信息</div>
+    </div>
+
+    <!-- 課表選擇 Modal -->
+    <div id="scheduleModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:3000;justify-content:center;align-items:center;transition:opacity 0.2s;opacity:0;padding:2vh;">
+        <div style="background:#23272f;border-radius:20px;width:100%;max-width:400px;max-height:calc(100vh - 4vh);box-shadow:0 6px 32px rgba(0,188,212,0.10);display:flex;flex-direction:column;overflow:hidden;">
+            <!-- 整個內容區域可滾動 -->
+            <div style="overflow-y:auto;flex:1;">
+                <div style="padding:24px 22px 16px 22px;">
+                    <h3 style="color:#00bcd4;margin:0;font-size:18px;text-align:center;">選擇課表</h3>
+                    <div id="scheduleError" style="color:#ff5252;font-size:14px;min-height:16px;margin-top:8px;text-align:center;"></div>
+                </div>
+                
+                <form id="scheduleForm" style="display:flex;flex-direction:column;gap:20px;padding:0 22px;">
+                    <div>
+                        <label for="modalScheduleTypeSelect" style="color:#b0bec5;font-size:15px;display:block;margin-bottom:8px;">選擇課表</label>
+                        <select id="modalScheduleTypeSelect" style="width:100%;padding:12px;border-radius:10px;border:1px solid #444;background:#181c22;color:#fff;font-size:16px;box-sizing:border-box;">
+                            <option value="">請選擇課表</option>
+                            <option value="Challenge Taiwan">Challenge Taiwan</option>
+                            <option value="Ironman">Ironman</option>
+                            <option value="LAVA 完賽樂園">LAVA 完賽樂園</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="modalDistanceSelect" style="color:#b0bec5;font-size:15px;display:block;margin-bottom:8px;">選擇距離</label>
+                        <select id="modalDistanceSelect" style="width:100%;padding:12px;border-radius:10px;border:1px solid #444;background:#181c22;color:#fff;font-size:16px;box-sizing:border-box;">
+                            <option value="">請選擇距離</option>
+                            <option value="113">113</option>
+                            <option value="226">226</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="modalLevelSelect" style="color:#b0bec5;font-size:15px;display:block;margin-bottom:8px;">課表等級</label>
+                        <select id="modalLevelSelect" style="width:100%;padding:12px;border-radius:10px;border:1px solid #444;background:#181c22;color:#fff;font-size:16px;box-sizing:border-box;">
+                            <option value="">請選擇等級</option>
+                            <option value="軟腳蝦">軟腳蝦</option>
+                            <option value="滑水鴨">滑水鴨</option>
+                            <option value="老鳥">老鳥</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 等級介紹區域 -->
+                    <div id="levelIntro" style="min-height:80px;padding:16px;background:#181c22;border-radius:10px;color:#b0bec5;font-size:14px;line-height:1.5;border:1px solid #444;margin-bottom:20px;">
+                        選擇等級後會顯示詳細說明
+                    </div>
+                    
+                    <!-- 額外測試內容 -->
+                    <div id="extraContent" style="display:none;">
+                        <div style="padding:16px;background:#1a1a1a;border-radius:10px;color:#b0bec5;font-size:14px;line-height:1.5;border:1px solid #444;margin-bottom:20px;">
+                            <h4 style="color:#00bcd4;margin-top:0;">訓練建議</h4>
+                            <p>1. 每週至少進行 3-4 次有氧訓練</p>
+                            <p>2. 包含游泳、騎車、跑步三項訓練</p>
+                            <p>3. 注意休息和恢復時間</p>
+                            <p>4. 定期檢查訓練進度</p>
+                            <p>5. 保持營養均衡</p>
+                            <p>6. 充足的睡眠時間</p>
+                        </div>
+                        <div style="padding:16px;background:#1a1a1a;border-radius:10px;color:#b0bec5;font-size:14px;line-height:1.5;border:1px solid #444;margin-bottom:20px;">
+                            <h4 style="color:#00bcd4;margin-top:0;">比賽準備</h4>
+                            <p>1. 提前 2-3 個月開始準備</p>
+                            <p>2. 逐步增加訓練強度</p>
+                            <p>3. 模擬比賽環境訓練</p>
+                            <p>4. 準備比賽裝備</p>
+                            <p>5. 制定比賽策略</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 按鈕區域也在可滾動區域內 -->
+                    <div style="padding:16px 0 24px 0;border-top:1px solid rgba(255,255,255,0.1);margin-top:20px;">
+                        <div style="display:flex;gap:12px;justify-content:center;">
+                            <button type="button" onclick="closeScheduleModal()" style="background:#666;color:#fff;border:none;padding:14px 24px;border-radius:12px;font-size:16px;min-width:100px;cursor:pointer;transition:background 0.3s;font-weight:600;">取消</button>
+                            <button type="submit" onclick="saveSchedule()" style="background:linear-gradient(90deg, #12214e 0%, #078282 100%);color:#fff;border:none;padding:14px 24px;border-radius:12px;font-size:16px;min-width:100px;cursor:pointer;transition:transform 0.2s;box-shadow:0 2px 8px rgba(0,188,212,0.3);font-weight:600;">儲存</button>
+                        </div>
+                        <div style="text-align:center;margin-top:12px;color:#666;font-size:12px;">
+                            向上滾動可查看更多選項
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模擬導航列 -->
+    <div class="mock-nav">
+        <div class="mock-nav-item active">🏠<br>主頁</div>
+        <div class="mock-nav-item">📊<br>統計</div>
+        <div class="mock-nav-item">💬<br>聊天</div>
+        <div class="mock-nav-item">📅<br>日曆</div>
+        <div class="mock-nav-item">👤<br>會員</div>
+    </div>
+
+    <script>
+        // 等級介紹對應表
+        const levelIntroMap = {
+            '軟腳蝦': `🦐 軟腳蝦<br/>
+                會做夢，會期待，下水還是怕嗆到口鼻有恐懼感，但在換氣技術沒好到真正學會游泳，大概只會蛙式，太冷也爆，剛練也爆。<br/><br/>
+                <strong>適合初學者</strong>，從基礎開始建立信心和技巧。訓練強度較低，注重技術學習。`,
+            '滑水鴨': `🦆 滑水鴨<br/>
+                游水順，會期待，但在長距離或高強度訓練時還是會有挑戰。已經掌握基本技巧，但需要更多練習來提升耐力。<br/><br/>
+                <strong>適合有一定基礎的練習者</strong>，可以嘗試更具挑戰性的訓練。中等強度訓練。`,
+            '老鳥': `🦅 老鳥<br/>
+                游水順，技術成熟，有豐富的訓練和比賽經驗。能夠應對各種訓練強度和比賽環境。<br/><br/>
+                <strong>適合經驗豐富的運動員</strong>，可以進行高強度和專業化的訓練。`
+        };
+
+        // 顯示設備信息
+        function showDeviceInfo() {
+            const deviceInfo = document.getElementById('deviceInfo');
+            const info = `
+                <p><strong>螢幕尺寸：</strong> ${window.screen.width} x ${window.screen.height}</p>
+                <p><strong>視窗尺寸：</strong> ${window.innerWidth} x ${window.innerHeight}</p>
+                <p><strong>可用高度：</strong> ${window.innerHeight - 80} (扣除導航列)</p>
+                <p><strong>設備像素比：</strong> ${window.devicePixelRatio}</p>
+                <p><strong>是否為手機：</strong> ${/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? '是' : '否'}</p>
+                <p><strong>觸控支援：</strong> ${'ontouchstart' in window ? '是' : '否'}</p>
+                <p><strong>Modal 最大高度：</strong> ${Math.floor(window.innerHeight - 40)}px (100vh - 4vh)</p>
+                <p><strong>外層 padding：</strong> 2vh (${Math.floor(window.innerHeight * 0.02)}px)</p>
+            `;
+            deviceInfo.innerHTML = info;
+        }
+
+        // 測試課表選擇 Modal
+        function testScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+            }, 10);
+            
+            // 顯示額外內容以測試滾動
+            document.getElementById('extraContent').style.display = 'block';
+        }
+
+        // 關閉課表選擇 Modal
+        function closeScheduleModal() {
+            const modal = document.getElementById('scheduleModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.getElementById('extraContent').style.display = 'none';
+            }, 200);
+        }
+
+        // 儲存課表
+        function saveSchedule() {
+            const type = document.getElementById('modalScheduleTypeSelect').value;
+            const distance = document.getElementById('modalDistanceSelect').value;
+            const level = document.getElementById('modalLevelSelect').value;
+            
+            if (!type || !distance || !level) {
+                document.getElementById('scheduleError').textContent = '請填寫完整資訊';
+                return;
+            }
+            
+            alert(`課表已儲存：${type} ${distance} ${level}`);
+            closeScheduleModal();
+        }
+
+        // 模擬鍵盤彈出（縮小可視區域）
+        function simulateKeyboard() {
+            document.body.style.height = '60vh';
+            document.body.style.overflow = 'hidden';
+            showDeviceInfo();
+        }
+
+        // 重置視圖
+        function resetView() {
+            document.body.style.height = '';
+            document.body.style.overflow = '';
+            showDeviceInfo();
+        }
+
+        // 點擊背景關閉 Modal
+        document.getElementById('scheduleModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeScheduleModal();
+            }
+        });
+
+        // 等級選擇事件
+        document.getElementById('modalLevelSelect').addEventListener('change', function() {
+            const levelIntro = document.getElementById('levelIntro');
+            const level = this.value;
+            
+            if (level && levelIntroMap[level]) {
+                levelIntro.innerHTML = levelIntroMap[level];
+            } else {
+                levelIntro.innerHTML = '選擇等級後會顯示詳細說明';
+            }
+        });
+
+        // 課表類型選擇事件
+        document.getElementById('modalScheduleTypeSelect').addEventListener('change', function() {
+            const distanceSelect = document.getElementById('modalDistanceSelect');
+            const type = this.value;
+            
+            let options = '<option value="">請選擇距離</option>';
+            if (type === 'Challenge Taiwan') {
+                options += '<option value="113">113</option><option value="226">226</option>';
+            } else if (type === 'Ironman') {
+                options += '<option value="113">113</option>';
+            } else if (type === 'LAVA 完賽樂園') {
+                options += '<option value="113">113</option>';
+            }
+            
+            distanceSelect.innerHTML = options;
+        });
+
+        // 頁面載入時自動顯示設備信息
+        document.addEventListener('DOMContentLoaded', function() {
+            showDeviceInfo();
+            
+            // 監聽視窗大小變化
+            window.addEventListener('resize', function() {
+                setTimeout(showDeviceInfo, 100);
+            });
+        });
+    </script>
+</body>
+</html>

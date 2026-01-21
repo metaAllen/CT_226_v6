@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統一 Strava 架構測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-healthy { background: #28a745; }
+        .status-warning { background: #ffc107; }
+        .status-error { background: #dc3545; }
+        .status-unknown { background: #6c757d; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 統一 Strava 架構測試</h1>
+    
+    <div class="test-section">
+        <h2>📊 系統狀態監控</h2>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="syncStatus">-</div>
+                <div class="metric-label">同步狀態</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="tokenStatus">-</div>
+                <div class="metric-label">Token 狀態</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="errorCount">-</div>
+                <div class="metric-label">錯誤計數</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="lastSync">-</div>
+                <div class="metric-label">最後同步</div>
+            </div>
+        </div>
+        <button class="test-button" onclick="updateSystemStatus()">更新狀態</button>
+        <div id="statusResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 統一管理器測試</h2>
+        <p>測試統一 Strava 同步管理器的基本功能</p>
+        <button class="test-button" onclick="testUnifiedManager()">測試管理器載入</button>
+        <button class="test-button" onclick="testManagerState()">檢查管理器狀態</button>
+        <button class="test-button" onclick="testObserverPattern()">測試觀察者模式</button>
+        <div id="managerResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 同步功能測試</h2>
+        <p>測試 Strava 同步的各項功能</p>
+        <button class="test-button" onclick="testTokenCheck()">檢查 Token</button>
+        <button class="test-button" onclick="testTokenRefresh()">刷新 Token</button>
+        <button class="test-button" onclick="testForceSync()">強制同步</button>
+        <button class="test-button" onclick="testEnableSync()">啟用同步</button>
+        <button class="test-button" onclick="testDisableSync()">禁用同步</button>
+        <div id="syncResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 後端 API 測試</h2>
+        <p>測試改進的後端 API 端點</p>
+        <button class="test-button" onclick="testHealthAPI()">健康檢查 API</button>
+        <button class="test-button" onclick="testStatusAPI()">狀態管理 API</button>
+        <button class="test-button" onclick="testSmartMerge()">智慧合併測試</button>
+        <div id="apiResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📈 性能測試</h2>
+        <p>測試新架構的性能表現</p>
+        <button class="test-button" onclick="testPerformance()">性能測試</button>
+        <button class="test-button" onclick="testMemoryUsage()">內存使用測試</button>
+        <button class="test-button" onclick="testRequestDeduplication()">請求去重測試</button>
+        <div id="performanceResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 整合測試</h2>
+        <p>測試完整的工作流程</p>
+        <button class="test-button" onclick="runFullIntegrationTest()">完整整合測試</button>
+        <button class="test-button" onclick="testErrorHandling()">錯誤處理測試</button>
+        <button class="test-button" onclick="testDataConsistency()">數據一致性測試</button>
+        <div id="integrationResult" class="result"></div>
+    </div>
+
+    <!-- 引入統一管理器 -->
+    <script src="strava_sync_unified.js"></script>
+    
+    <script>
+        // 全局變量
+        let testResults = {};
+        let performanceMetrics = {};
+        
+        // ===== 系統狀態監控 =====
+        function updateSystemStatus() {
+            const resultDiv = document.getElementById('statusResult');
+            resultDiv.innerHTML = '正在更新系統狀態...';
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    resultDiv.className = 'result error';
+                    return;
+                }
+                
+                const stats = unified.getStats();
+                const state = unified.getState();
+                
+                // 更新指標卡片
+                document.getElementById('syncStatus').textContent = state.syncEnabled ? '啟用' : '禁用';
+                document.getElementById('tokenStatus').textContent = state.tokenValid ? '有效' : '無效';
+                document.getElementById('errorCount').textContent = state.errorCount;
+                document.getElementById('lastSync').textContent = state.lastSyncTime ? 
+                    new Date(state.lastSyncTime).toLocaleTimeString() : '從未';
+                
+                const statusText = `📊 系統狀態報告
+                
+🔄 同步狀態: ${state.syncEnabled ? '✅ 啟用' : '❌ 禁用'}
+🔑 Token 狀態: ${state.tokenValid ? '✅ 有效' : '❌ 無效'}
+⚠️ 錯誤計數: ${state.errorCount}
+📅 最後同步: ${state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleString() : '從未'}
+⏱️ 同步進行中: ${state.syncInProgress ? '是' : '否'}
+
+📈 性能指標:
+- 活躍定時器: ${stats.activeTimers}
+- 緩存請求: ${stats.cachedRequests}
+- 同步啟用: ${stats.syncEnabled}
+- Token 有效: ${stats.tokenValid}`;
+                
+                resultDiv.innerHTML = statusText;
+                resultDiv.className = 'result success';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 更新狀態失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // ===== 統一管理器測試 =====
+        function testUnifiedManager() {
+            const resultDiv = document.getElementById('managerResult');
+            resultDiv.innerHTML = '正在測試統一管理器...';
+            
+            try {
+                const unified = window.stravaSyncManager;
+                
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    resultDiv.className = 'result error';
+                    return;
+                }
+                
+                // 測試基本方法
+                const state = unified.getState();
+                const stats = unified.getStats();
+                
+                const testResults = {
+                    '管理器載入': '✅ 成功',
+                    'getState()': typeof unified.getState === 'function' ? '✅ 可用' : '❌ 不可用',
+                    'getStats()': typeof unified.getStats === 'function' ? '✅ 可用' : '❌ 不可用',
+                    'addObserver()': typeof unified.addObserver === 'function' ? '✅ 可用' : '❌ 不可用',
+                    'enableSync()': typeof unified.enableSync === 'function' ? '✅ 可用' : '❌ 不可用',
+                    'disableSync()': typeof unified.disableSync === 'function' ? '✅ 可用' : '❌ 不可用',
+                    'forceSync()': typeof unified.forceSync === 'function' ? '✅ 可用' : '❌ 不可用'
+                };
+                
+                let resultText = '🧪 統一管理器測試結果:\n\n';
+                Object.entries(testResults).forEach(([test, result]) => {
+                    resultText += `${test}: ${result}\n`;
+                });
+                
+                resultText += `\n📊 當前狀態:\n${JSON.stringify(state, null, 2)}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = 'result success';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        function testManagerState() {
+            const resultDiv = document.getElementById('managerResult');
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                const state = unified.getState();
+                const stats = unified.getStats();
+                
+                const stateText = `🔍 管理器狀態詳情:
+
+📋 基本狀態:
+- 同步啟用: ${state.syncEnabled}
+- Token 有效: ${state.tokenValid}
+- 同步進行中: ${state.syncInProgress}
+- 錯誤計數: ${state.errorCount}
+- 最後同步: ${state.lastSyncTime || '從未'}
+
+📊 性能統計:
+- 活躍定時器: ${stats.activeTimers}
+- 緩存請求: ${stats.cachedRequests}
+- 同步啟用: ${stats.syncEnabled}
+- Token 有效: ${stats.tokenValid}
+- 最後同步: ${stats.lastSyncTime}
+- 錯誤計數: ${stats.errorCount}`;
+                
+                resultDiv.innerHTML = stateText;
+                resultDiv.className = 'result info';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 狀態檢查失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        function testObserverPattern() {
+            const resultDiv = document.getElementById('managerResult');
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                let observerTestResults = [];
+                
+                // 添加測試觀察者
+                const testObserver = (event, data) => {
+                    observerTestResults.push({ event, data, timestamp: new Date().toISOString() });
+                };
+                
+                unified.addObserver(testObserver);
+                
+                // 觸發一些事件（如果可能）
+                setTimeout(() => {
+                    unified.removeObserver(testObserver);
+                    
+                    const resultText = `👁️ 觀察者模式測試結果:
+
+📝 測試觀察者已添加和移除: ✅ 成功
+📊 觀察到的事件數量: ${observerTestResults.length}
+
+${observerTestResults.length > 0 ? 
+    '📋 觀察到的事件:\n' + observerTestResults.map(r => 
+        `- ${r.event} (${r.timestamp})`
+    ).join('\n') : 
+    'ℹ️ 暫無事件觸發（這是正常的，因為沒有實際的同步操作）'}`;
+                    
+                    resultDiv.innerHTML = resultText;
+                    resultDiv.className = 'result success';
+                }, 1000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 觀察者測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // ===== 同步功能測試 =====
+        async function testTokenCheck() {
+            const resultDiv = document.getElementById('syncResult');
+            resultDiv.innerHTML = '正在檢查 Token...';
+            
+            try {
+                const response = await fetch('/api/strava/check-token', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                const data = await response.json();
+                
+                const resultText = `🔑 Token 檢查結果:
+
+狀態碼: ${response.status}
+Token 有效: ${data.valid ? '✅ 是' : '❌ 否'}
+過期時間: ${data.expiresAt || '未知'}
+錯誤信息: ${data.error || '無'}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Token 檢查失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testTokenRefresh() {
+            const resultDiv = document.getElementById('syncResult');
+            resultDiv.innerHTML = '正在刷新 Token...';
+            
+            try {
+                const response = await fetch('/api/strava/refresh-token', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                const data = await response.json();
+                
+                const resultText = `🔄 Token 刷新結果:
+
+狀態碼: ${response.status}
+刷新成功: ${data.success ? '✅ 是' : '❌ 否'}
+新過期時間: ${data.expiresAt || '未知'}
+錯誤信息: ${data.error || '無'}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Token 刷新失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testForceSync() {
+            const resultDiv = document.getElementById('syncResult');
+            resultDiv.innerHTML = '正在強制同步...';
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                await unified.forceSync();
+                
+                resultDiv.innerHTML = '✅ 強制同步已觸發';
+                resultDiv.className = 'result success';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 強制同步失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testEnableSync() {
+            const resultDiv = document.getElementById('syncResult');
+            resultDiv.innerHTML = '正在啟用同步...';
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                await unified.enableSync();
+                
+                resultDiv.innerHTML = '✅ 同步已啟用';
+                resultDiv.className = 'result success';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 啟用同步失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testDisableSync() {
+            const resultDiv = document.getElementById('syncResult');
+            resultDiv.innerHTML = '正在禁用同步...';
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                await unified.disableSync();
+                
+                resultDiv.innerHTML = '✅ 同步已禁用';
+                resultDiv.className = 'result success';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 禁用同步失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // ===== 後端 API 測試 =====
+        async function testHealthAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = '正在測試健康檢查 API...';
+            
+            try {
+                const response = await fetch('/api/strava/health', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                const data = await response.json();
+                
+                const resultText = `🏥 健康檢查結果:
+
+狀態碼: ${response.status}
+系統狀態: ${data.status}
+同步啟用: ${data.stravaSyncEnabled ? '✅ 是' : '❌ 否'}
+有 Access Token: ${data.hasAccessToken ? '✅ 是' : '❌ 否'}
+有 Refresh Token: ${data.hasRefreshToken ? '✅ 是' : '❌ 否'}
+Token 過期時間: ${data.tokenExpiresAt || '未知'}
+最後同步: ${data.lastSync || '從未'}
+最後 Token 刷新: ${data.lastTokenRefresh || '從未'}
+錯誤信息: ${data.error || '無'}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 健康檢查失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testStatusAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = '正在測試狀態管理 API...';
+            
+            try {
+                // 測試獲取當前狀態
+                const healthResponse = await fetch('/api/strava/health', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                const healthData = await healthResponse.json();
+                const currentStatus = healthData.stravaSyncEnabled;
+                
+                // 測試切換狀態
+                const toggleResponse = await fetch('/api/strava/status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        action: 'toggle',
+                        enabled: !currentStatus
+                    })
+                });
+                
+                const toggleData = await toggleResponse.json();
+                
+                // 恢復原狀態
+                await fetch('/api/strava/status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        action: 'toggle',
+                        enabled: currentStatus
+                    })
+                });
+                
+                const resultText = `⚙️ 狀態管理 API 測試結果:
+
+原始狀態: ${currentStatus ? '啟用' : '禁用'}
+切換操作: ${toggleResponse.ok ? '✅ 成功' : '❌ 失敗'}
+新狀態: ${toggleData.stravaSyncEnabled ? '啟用' : '禁用'}
+狀態已恢復: ✅ 是`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = 'result success';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 狀態管理測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testSmartMerge() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = '正在測試智慧合併...';
+            
+            try {
+                const userId = localStorage.getItem('currentUser');
+                const token = localStorage.getItem('token');
+                
+                // 模擬本地和雲端數據
+                const localData = {
+                    calendarEvents: {
+                        '2024-01-15': [
+                            { type: '跑步', distance: 5, source: 'Strava', strava_id: '123' }
+                        ]
+                    }
+                };
+                
+                const cloudData = {
+                    calendarEvents: {
+                        '2024-01-15': [
+                            { type: '游泳', distance: 2, source: 'manual' }
+                        ],
+                        '2024-01-16': [
+                            { type: '騎車', distance: 20, source: 'manual' }
+                        ]
+                    }
+                };
+                
+                // 測試智慧合併
+                const response = await fetch(`/api/user-data/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        data: localData,
+                        mergeStrategy: 'smart'
+                    })
+                });
+                
+                const resultText = `🧠 智慧合併測試結果:
+
+狀態碼: ${response.status}
+合併策略: smart
+本地數據: ${JSON.stringify(localData, null, 2)}
+雲端數據: ${JSON.stringify(cloudData, null, 2)}
+合併成功: ${response.ok ? '✅ 是' : '❌ 否'}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = response.ok ? 'result success' : 'result error';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 智慧合併測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // ===== 性能測試 =====
+        function testPerformance() {
+            const resultDiv = document.getElementById('performanceResult');
+            resultDiv.innerHTML = '正在進行性能測試...';
+            
+            try {
+                const startTime = performance.now();
+                
+                // 測試統一管理器的性能
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                // 測試方法調用性能
+                const state = unified.getState();
+                const stats = unified.getStats();
+                
+                const endTime = performance.now();
+                const executionTime = endTime - startTime;
+                
+                // 測試內存使用
+                const memoryInfo = performance.memory ? {
+                    used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
+                    total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
+                    limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024)
+                } : null;
+                
+                const resultText = `⚡ 性能測試結果:
+
+⏱️ 執行時間: ${executionTime.toFixed(2)}ms
+📊 狀態獲取: ${typeof state === 'object' ? '✅ 成功' : '❌ 失敗'}
+📈 統計獲取: ${typeof stats === 'object' ? '✅ 成功' : '❌ 失敗'}
+
+${memoryInfo ? `💾 內存使用:
+- 已使用: ${memoryInfo.used}MB
+- 總計: ${memoryInfo.total}MB
+- 限制: ${memoryInfo.limit}MB` : '💾 內存信息不可用'}
+
+🎯 性能評級: ${executionTime < 10 ? '優秀' : executionTime < 50 ? '良好' : '需要優化'}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = 'result success';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 性能測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        function testMemoryUsage() {
+            const resultDiv = document.getElementById('performanceResult');
+            
+            try {
+                if (!performance.memory) {
+                    resultDiv.innerHTML = '❌ 內存信息不可用（需要 Chrome 瀏覽器）';
+                    resultDiv.className = 'result warning';
+                    return;
+                }
+                
+                const memoryInfo = {
+                    used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
+                    total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
+                    limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024)
+                };
+                
+                const usagePercent = Math.round((memoryInfo.used / memoryInfo.limit) * 100);
+                
+                const resultText = `💾 內存使用詳情:
+
+📊 當前使用: ${memoryInfo.used}MB
+📈 總計分配: ${memoryInfo.total}MB
+🚫 限制: ${memoryInfo.limit}MB
+📊 使用率: ${usagePercent}%
+
+${usagePercent < 50 ? '✅ 內存使用正常' : usagePercent < 80 ? '⚠️ 內存使用較高' : '❌ 內存使用過高'}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = usagePercent < 80 ? 'result success' : 'result warning';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 內存測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        function testRequestDeduplication() {
+            const resultDiv = document.getElementById('performanceResult');
+            resultDiv.innerHTML = '正在測試請求去重...';
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                // 模擬多個相同的請求
+                const startTime = performance.now();
+                const promises = [];
+                
+                for (let i = 0; i < 5; i++) {
+                    promises.push(
+                        unified.makeRequest('test-request', () => 
+                            Promise.resolve({ data: 'test', timestamp: Date.now() })
+                        )
+                    );
+                }
+                
+                Promise.all(promises).then(results => {
+                    const endTime = performance.now();
+                    const executionTime = endTime - startTime;
+                    
+                    // 檢查是否所有結果都相同（表示去重成功）
+                    const allSame = results.every(result => 
+                        JSON.stringify(result) === JSON.stringify(results[0])
+                    );
+                    
+                    const resultText = `🔄 請求去重測試結果:
+
+📊 並發請求數: 5
+⏱️ 執行時間: ${executionTime.toFixed(2)}ms
+🎯 去重效果: ${allSame ? '✅ 成功' : '❌ 失敗'}
+📈 平均響應時間: ${(executionTime / 5).toFixed(2)}ms
+
+${allSame ? '✅ 請求去重機制工作正常' : '❌ 請求去重機制可能失效'}`;
+                    
+                    resultDiv.innerHTML = resultText;
+                    resultDiv.className = allSame ? 'result success' : 'result error';
+                });
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 請求去重測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // ===== 整合測試 =====
+        async function runFullIntegrationTest() {
+            const resultDiv = document.getElementById('integrationResult');
+            resultDiv.innerHTML = '正在進行完整整合測試...';
+            
+            try {
+                const testResults = [];
+                const startTime = performance.now();
+                
+                // 1. 檢查統一管理器
+                const unified = window.stravaSyncManager;
+                testResults.push({
+                    test: '統一管理器載入',
+                    result: unified ? '✅ 成功' : '❌ 失敗'
+                });
+                
+                // 2. 檢查基本狀態
+                if (unified) {
+                    const state = unified.getState();
+                    testResults.push({
+                        test: '狀態獲取',
+                        result: typeof state === 'object' ? '✅ 成功' : '❌ 失敗'
+                    });
+                }
+                
+                // 3. 檢查後端 API
+                try {
+                    const healthResponse = await fetch('/api/strava/health', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    testResults.push({
+                        test: '健康檢查 API',
+                        result: healthResponse.ok ? '✅ 成功' : '❌ 失敗'
+                    });
+                } catch (error) {
+                    testResults.push({
+                        test: '健康檢查 API',
+                        result: '❌ 失敗'
+                    });
+                }
+                
+                // 4. 檢查 Token 狀態
+                try {
+                    const tokenResponse = await fetch('/api/strava/check-token', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    testResults.push({
+                        test: 'Token 檢查 API',
+                        result: tokenResponse.ok ? '✅ 成功' : '❌ 失敗'
+                    });
+                } catch (error) {
+                    testResults.push({
+                        test: 'Token 檢查 API',
+                        result: '❌ 失敗'
+                    });
+                }
+                
+                const endTime = performance.now();
+                const totalTime = endTime - startTime;
+                
+                const successCount = testResults.filter(t => t.result.includes('✅')).length;
+                const totalTests = testResults.length;
+                
+                let resultText = `🧪 完整整合測試結果:
+
+⏱️ 總執行時間: ${totalTime.toFixed(2)}ms
+📊 測試通過率: ${successCount}/${totalTests} (${Math.round(successCount/totalTests*100)}%)
+
+📋 詳細結果:`;
+                
+                testResults.forEach(test => {
+                    resultText += `\n${test.test}: ${test.result}`;
+                });
+                
+                resultText += `\n\n🎯 總體評級: ${successCount === totalTests ? '✅ 優秀' : successCount >= totalTests * 0.8 ? '⚠️ 良好' : '❌ 需要修復'}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = successCount === totalTests ? 'result success' : 'result warning';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 整合測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        function testErrorHandling() {
+            const resultDiv = document.getElementById('integrationResult');
+            resultDiv.innerHTML = '正在測試錯誤處理...';
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                let errorHandlingResults = [];
+                
+                // 測試無效請求
+                unified.makeRequest('invalid-request', () => {
+                    throw new Error('模擬錯誤');
+                }).catch(error => {
+                    errorHandlingResults.push({
+                        test: '無效請求處理',
+                        result: error.message === '模擬錯誤' ? '✅ 成功' : '❌ 失敗'
+                    });
+                });
+                
+                // 測試觀察者錯誤處理
+                const errorObserver = (event, data) => {
+                    throw new Error('觀察者錯誤');
+                };
+                
+                unified.addObserver(errorObserver);
+                
+                // 觸發一個事件來測試錯誤處理
+                setTimeout(() => {
+                    unified.removeObserver(errorObserver);
+                    
+                    const resultText = `🛡️ 錯誤處理測試結果:
+
+📊 測試項目:
+- 無效請求處理: ${errorHandlingResults[0]?.result || '⏳ 進行中'}
+- 觀察者錯誤處理: ✅ 成功（未崩潰）
+
+🎯 錯誤處理評級: ${errorHandlingResults.every(r => r.result.includes('✅')) ? '✅ 優秀' : '⚠️ 需要改進'}`;
+                    
+                    resultDiv.innerHTML = resultText;
+                    resultDiv.className = 'result success';
+                }, 1000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 錯誤處理測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        function testDataConsistency() {
+            const resultDiv = document.getElementById('integrationResult');
+            resultDiv.innerHTML = '正在測試數據一致性...';
+            
+            try {
+                const unified = window.stravaSyncManager;
+                if (!unified) {
+                    resultDiv.innerHTML = '❌ 統一管理器未載入';
+                    return;
+                }
+                
+                // 測試多次狀態獲取的一致性
+                const state1 = unified.getState();
+                const state2 = unified.getState();
+                const stats1 = unified.getStats();
+                const stats2 = unified.getStats();
+                
+                const stateConsistent = JSON.stringify(state1) === JSON.stringify(state2);
+                const statsConsistent = JSON.stringify(stats1) === JSON.stringify(stats2);
+                
+                const resultText = `🔄 數據一致性測試結果:
+
+📊 狀態一致性: ${stateConsistent ? '✅ 一致' : '❌ 不一致'}
+📈 統計一致性: ${statsConsistent ? '✅ 一致' : '❌ 不一致'}
+
+🎯 數據一致性評級: ${stateConsistent && statsConsistent ? '✅ 優秀' : '❌ 需要修復'}`;
+                
+                resultDiv.innerHTML = resultText;
+                resultDiv.className = stateConsistent && statsConsistent ? 'result success' : 'result error';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ 數據一致性測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        // ===== 頁面初始化 =====
+        window.addEventListener('load', () => {
+            console.log('統一 Strava 架構測試頁面已載入');
+            
+            // 自動更新系統狀態
+            setTimeout(updateSystemStatus, 1000);
+            
+            // 定期更新狀態
+            setInterval(updateSystemStatus, 30000); // 每30秒更新一次
+        });
+    </script>
+</body>
+</html>

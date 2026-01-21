@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strava 調試頁面</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+        button { margin: 5px; padding: 10px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Strava 調試頁面</h1>
+    
+    <div class="debug-section">
+        <h2>1. 檢查 localStorage</h2>
+        <button onclick="checkLocalStorage()">檢查 localStorage</button>
+        <div id="localStorageInfo"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>2. 檢查 tokenManager</h2>
+        <button onclick="checkTokenManager()">檢查 tokenManager</button>
+        <div id="tokenManagerInfo"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>3. 測試 token 刷新</h2>
+        <button onclick="testTokenRefresh()">測試 token 刷新</button>
+        <div id="tokenRefreshInfo"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>4. 測試 API 調用</h2>
+        <button onclick="testAPICall()">測試 API 調用</button>
+        <div id="apiCallInfo"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>5. 檢查 JWT Token 發送</h2>
+        <button onclick="testJWTTokenSending()">測試 JWT Token 發送</button>
+        <div id="jwtTokenSendingInfo"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>6. 檢查服務器狀態</h2>
+        <button onclick="checkServerStatus()">檢查服務器狀態</button>
+        <div id="serverStatusInfo"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>5. 控制台日誌</h2>
+        <button onclick="clearLog()">清除日誌</button>
+        <div id="consoleLog"></div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        // 重寫 console.log 來捕獲日誌
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logDiv = document.getElementById('consoleLog');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logDiv.innerHTML += '<div class="info">[LOG] ' + args.join(' ') + '</div>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logDiv.innerHTML += '<div class="error">[ERROR] ' + args.join(' ') + '</div>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+
+        function checkLocalStorage() {
+            const info = {
+                token: localStorage.getItem('token'),
+                strava_access_token: localStorage.getItem('strava_access_token'),
+                strava_refresh_token: localStorage.getItem('strava_refresh_token'),
+                strava_expires_at: localStorage.getItem('strava_expires_at'),
+                currentUser: localStorage.getItem('currentUser')
+            };
+            
+            document.getElementById('localStorageInfo').innerHTML = `
+                <pre>${JSON.stringify(info, null, 2)}</pre>
+            `;
+        }
+
+        function checkTokenManager() {
+            const info = {
+                tokenManagerExists: typeof window.tokenManager !== 'undefined',
+                isTokenExpired: window.tokenManager ? window.tokenManager.isTokenExpired() : 'N/A',
+                hasValidToken: window.tokenManager ? '需要測試' : 'N/A'
+            };
+            
+            document.getElementById('tokenManagerInfo').innerHTML = `
+                <pre>${JSON.stringify(info, null, 2)}</pre>
+            `;
+        }
+
+        async function testTokenRefresh() {
+            try {
+                if (!window.tokenManager) {
+                    throw new Error('tokenManager 未載入');
+                }
+
+                const result = await window.tokenManager.refreshToken();
+                document.getElementById('tokenRefreshInfo').innerHTML = `
+                    <div class="success">Token 刷新結果: ${result}</div>
+                `;
+            } catch (error) {
+                document.getElementById('tokenRefreshInfo').innerHTML = `
+                    <div class="error">Token 刷新失敗: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testAPICall() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('未找到用戶 token');
+                }
+
+                const response = await fetch('/api/strava/activities', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = {
+                    status: response.status,
+                    ok: response.ok,
+                    statusText: response.statusText
+                };
+
+                if (response.ok) {
+                    const data = await response.json();
+                    result.data = data;
+                } else {
+                    const errorData = await response.json();
+                    result.error = errorData;
+                }
+
+                document.getElementById('apiCallInfo').innerHTML = `
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('apiCallInfo').innerHTML = `
+                    <div class="error">API 調用失敗: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testJWTTokenSending() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('未找到用戶 token');
+                }
+                console.log('測試 JWT token 發送:', token);
+                
+                // 模擬與 clendar.html 相同的 API 調用
+                const response = await fetch('/api/strava/activities', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = {
+                    status: response.status,
+                    ok: response.ok,
+                    statusText: response.statusText,
+                    headers: {
+                        'content-type': response.headers.get('content-type')
+                    }
+                };
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.data = data;
+                } else {
+                    const errorData = await response.json();
+                    result.error = errorData;
+                }
+                
+                document.getElementById('jwtTokenSendingInfo').innerHTML = `
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('jwtTokenSendingInfo').innerHTML = `
+                    <div class="error">JWT Token 發送測試失敗: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function checkServerStatus() {
+            try {
+                console.log('檢查服務器狀態...');
+                const response = await fetch('/api/test-token', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = {
+                    status: response.status,
+                    ok: response.ok,
+                    statusText: response.statusText,
+                    serverRunning: response.status !== 0
+                };
+                
+                document.getElementById('serverStatusInfo').innerHTML = `
+                    <div class="success">服務器正在運行</div>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('serverStatusInfo').innerHTML = `
+                    <div class="error">服務器未運行或無法連接: ${error.message}</div>
+                    <div class="info">請確保服務器已啟動 (node server.js)</div>
+                `;
+            }
+        }
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        // 頁面載入時自動檢查
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('調試頁面已載入');
+            checkLocalStorage();
+            checkTokenManager();
+        });
+    </script>
+</body>
+</html> 

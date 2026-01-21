@@ -1,0 +1,3079 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membership</title>
+    <script src="../auth.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            width: 100vw;
+            min-height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* 背景動畫效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(33, 150, 243, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(156, 39, 176, 0.05) 0%, transparent 50%);
+            animation: backgroundFloat 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(1deg); }
+            66% { transform: translateY(10px) rotate(-1deg); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            height: 100dvh;
+            min-height: 0;
+            background: rgba(34, 40, 49, 0.95);
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+            border: 1.5px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(8px);
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top);
+            position: relative;
+        }
+
+        .header {
+            width: 100%;
+            background: linear-gradient(90deg, #12214e 0%, #078282 100%);
+            color: white;
+            text-align: center;
+            padding: 20px 0 16px 0;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+
+
+
+
+        .content {
+            flex: 1;
+            width: 100%;
+            padding: 20px;
+            padding-bottom: 80px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 歡迎卡片 */
+        .welcome-card {
+            background: linear-gradient(135deg, rgba(0, 188, 212, 0.1) 0%, rgba(33, 150, 243, 0.1) 100%);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid rgba(0, 188, 212, 0.2);
+            margin-bottom: 20px;
+            animation: slideInUp 0.8s ease-out;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            /* 預設為展開狀態 */
+            min-height: 120px;
+            width: auto;
+            height: auto;
+        }
+
+        .welcome-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,188,212,0.2);
+        }
+
+        @keyframes slideInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome-card h2 {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+            background: linear-gradient(45deg, #00bcd4, #2196f3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: all 0.3s ease;
+        }
+
+        .welcome-card p {
+            font-size: 14px;
+            color: #b0bec5;
+            margin: 0;
+            line-height: 1.5;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .welcome-card.expanded p {
+            max-height: 200px;
+            opacity: 1;
+            margin-top: 16px;
+        }
+
+        .welcome-card.expanded h2 {
+            margin-bottom: 8px;
+        }
+
+        /* 蝦子圖標樣式 */
+        .shrimp-icon {
+            display: none;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 收縮狀態樣式 - 圓形火箭按鈕 */
+        .welcome-card.collapsed {
+            width: 80px;
+            height: 80px;
+            padding: 0;
+            min-height: 80px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(0, 188, 212, 0.2) 0%, rgba(33, 150, 243, 0.2) 100%);
+            border: 2px solid rgba(0, 188, 212, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 188, 212, 0.2);
+        }
+
+        .welcome-card.collapsed .welcome-title,
+        .welcome-card.collapsed .welcome-text {
+            display: none !important;
+        }
+
+        .welcome-card.collapsed .shrimp-icon {
+            display: flex !important;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome-card.collapsed:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, rgba(0, 188, 212, 0.3) 0%, rgba(33, 150, 243, 0.3) 100%);
+            border-color: rgba(0, 188, 212, 0.5);
+            box-shadow: 0 6px 20px rgba(0, 188, 212, 0.3);
+        }
+
+        .welcome-card.collapsed:active {
+            transform: scale(0.95);
+            transition: transform 0.1s ease;
+        }
+
+        /* 蝦子圖標動畫已取消 */
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: slideInUp 0.8s ease-out 0.2s both;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .form-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
+            padding-bottom: 80px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .form-section {
+            width: 100%;
+            max-width: 100%;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 28px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
+            position: relative;
+            overflow: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .form-section.fade-out {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        .form-section.fade-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 表單裝飾 */
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00bcd4, #2196f3, #00bcd4);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: rgba(24, 28, 34, 0.8);
+            color: #fff;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            background: rgba(35, 39, 47, 0.9);
+            border-color: #00bcd4;
+            box-shadow: 0 0 0 4px rgba(0, 188, 212, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .input-group input::placeholder {
+            color: #b0bec5;
+            transition: color 0.3s ease;
+        }
+
+        .input-group input:focus::placeholder {
+            color: rgba(176, 190, 197, 0.5);
+        }
+
+        .error-message {
+            color: #ff5252;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px 0;
+            background: linear-gradient(135deg, #00bcd4 0%, #2196f3 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,188,212,0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #0097a7 0%, #1976d2 100%);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(0,188,212,0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .form-footer {
+            margin-top: 24px;
+            text-align: center;
+            color: #b0bec5;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-footer span {
+            color: #00bcd4;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .form-footer span:hover {
+            background: rgba(0, 188, 212, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-footer span:active {
+            transform: translateY(0);
+        }
+
+
+
+        @media (max-width: 500px) {
+            .container {
+                max-width: 100vw;
+                height: 100dvh;
+                min-height: 0;
+                border-radius: 0;
+                padding-bottom: 80px;
+            }
+            .content {
+                padding: 16px;
+                padding-bottom: 90px;
+            }
+            .form-section {
+                padding: 20px;
+            }
+            .welcome-card {
+                padding: 32px 24px;
+                min-height: 120px;
+            }
+            .welcome-card.collapsed {
+                width: 70px;
+                height: 70px;
+                padding: 0;
+                min-height: 70px;
+                border-radius: 50%;
+            }
+            .welcome-card.collapsed .shrimp-icon img {
+                width: 80%;
+                height: 80%;
+            }
+            .card {
+                padding: 28px 20px;
+                min-height: 140px;
+            }
+            .form-section {
+                padding: 28px 20px;
+                min-height: 160px;
+            }
+        }
+
+        /* 好友功能相關樣式 */
+        .friends-section {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .friends-section.active {
+            display: block;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: #181c22;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #00bcd4;
+        }
+
+        .search-results {
+            display: none;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-top: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* 搜尋結果滾動條樣式 - 與統計頁面一致 */
+        .search-results::-webkit-scrollbar {
+            width: 8px;
+        }
+        .search-results::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+        .search-results::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 4px;
+        }
+        .search-results::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+        /* Firefox 滾動條樣式 */
+        .search-results {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00bcd4 0%, #2196f3 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-family: 'Segoe UI', 'Roboto Mono', 'Consolas', 'monospace', 'Arial', sans-serif;
+            font-size: 16px;
+            color: #00eaff;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #00eaff 0%, #2196f3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            transition: filter 0.2s, text-shadow 0.2s;
+            text-shadow: 0 2px 8px rgba(0,186,255,0.10);
+        }
+
+        .user-name:hover {
+            filter: brightness(1.2) drop-shadow(0 0 6px #00eaffcc);
+            text-shadow: 0 4px 16px #00eaff99;
+        }
+
+        .add-friend-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #00bcd4;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .add-friend-btn:hover {
+            background: #0097a7;
+        }
+
+        .add-friend-btn.added {
+            background: #4caf50;
+            cursor: default;
+        }
+
+        .add-friend-btn.added:disabled {
+            opacity: 0.7;
+        }
+
+        .friends-list {
+            margin-top: 24px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* 好友列表滾動條樣式 - 與統計頁面一致 */
+        .friends-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .friends-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+        .friends-list::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 4px;
+        }
+        .friends-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+        /* Firefox 滾動條樣式 */
+        .friends-list {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+
+        .friends-list h3 {
+            color: #fff;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        .no-friends, .no-users {
+            color: #b0bec5;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        /* 自定義滾動條樣式 */
+        .form-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .form-container::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        .form-container::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 4px;
+        }
+
+        .form-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+
+        /* Firefox 滾動條樣式 */
+        .form-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+
+        .friends-section.card {
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .member-tabs {
+            display: flex;
+            justify-content: space-between;
+            background: #181c22;
+            border-radius: 16px 16px 0 0;
+            margin: 0 0 0 0;
+            box-shadow: 0 2px 8px rgba(0,188,212,0.08);
+            overflow: hidden;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 18px 0 14px 0;
+            background: none;
+            border: none;
+            color: #b0bec5;
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 0;
+            border-bottom: 3px solid transparent;
+            transition: background 0.2s, color 0.2s, border-bottom 0.2s;
+        }
+        .tab-btn.active {
+            color: #00eaff;
+            border-bottom: 3px solid #00eaff;
+            background: #23272f;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card {
+            background: #23272f;
+            border-radius: 18px;
+            margin: 18px 0 0 0;
+            padding: 24px 18px 18px 18px;
+            box-shadow: 0 2px 12px rgba(0,188,212,0.08);
+        }
+        .friends-title {
+            color: #00eaff;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .friends-avatars {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            max-height: 60px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        /* 好友頭像滾動條樣式 - 與統計頁面一致 */
+        .friends-avatars::-webkit-scrollbar {
+            height: 6px;
+        }
+        .friends-avatars::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+        }
+        .friends-avatars::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 3px;
+        }
+        .friends-avatars::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+        /* Firefox 滾動條樣式 */
+        .friends-avatars {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+        .friends-avatars .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00bcd4 0%, #2196f3 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            font-size: 18px;
+            border: 2px solid #181c22;
+            overflow: hidden;
+        }
+        .search-label {
+            color: #b0bec5;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .search-container-modern {
+            display: flex;
+            align-items: center;
+            background: #181c22;
+            border-radius: 10px;
+            padding: 8px 14px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,188,212,0.05);
+            position: relative;
+        }
+        .search-container-modern input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            padding: 8px 0;
+        }
+        .search-icon-modern {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            margin-left: 8px;
+        }
+        .search-icon-modern svg {
+            display: block;
+            width: 20px;
+            height: 20px;
+        }
+        .logout-btn {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 38px;
+            height: 38px;
+            background: #ff5252;
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px #ff5252aa;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(.4,2,.6,1);
+            overflow: hidden;
+            padding: 0;
+        }
+        .logout-btn .logout-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .logout-btn .logout-icon svg {
+            width: 20px;
+            height: 20px;
+            color: #fff;
+        }
+        .logout-btn .logout-text {
+            display: none;
+            margin-left: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .logout-btn:hover {
+            width: 110px;
+            background: linear-gradient(90deg, #ff5252 0%, #ffb6b6 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px #ff5252cc;
+        }
+        .logout-btn:hover .logout-text {
+            display: inline-block;
+            color: #fff;
+        }
+        .logout-btn:hover .logout-icon {
+            color: #fff;
+        }
+        .remove-friend-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #e57373;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+        .remove-friend-btn:hover {
+            background: #c62828;
+        }
+        /* 合併卡片自定義滾動條樣式 */
+        #profileCard::-webkit-scrollbar {
+            width: 8px;
+        }
+        #profileCard::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+        #profileCard::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 4px;
+        }
+        #profileCard::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+        #profileCard {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+        /* 讓個人卡片填滿可用高度並由內部區塊滾動（僅影響關於分頁） */
+        #profileCard {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+        #tabContent-about {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        /* 編輯個人資料彈窗欄位寬度一致性加強 */
+        #profileEditModal label {
+            display: block;
+            width: 100%;
+        }
+        #profileEditModal input,
+        #profileEditModal select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #friendProfileModal {
+            display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;
+        }
+        #friendProfileModal .modal-content-scroll {
+            background:#232526;border-radius:22px;padding:32px 28px;min-width:280px;max-width:90vw;max-height:70vh;box-shadow:0 8px 32px #0008;display:flex;flex-direction:column;gap:18px;align-items:center;overflow-y:auto;
+        }
+        #friendProfileModal .modal-content-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        #friendProfileModal .modal-content-scroll::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+        #friendProfileModal .modal-content-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 4px;
+        }
+        #friendProfileModal .modal-content-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+        #friendProfileModal .modal-content-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+        #friendProfileModal .modal-content-scroll {
+            max-width: 320px;
+            width: 100vw;
+            min-width: 0;
+            max-height: 75vh;
+            height: auto;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        @media (max-width: 500px) {
+            #friendProfileModal .modal-content-scroll {
+                max-width: 94vw;
+                padding: 18px 3vw;
+            }
+        }
+        #friendProfileAvatar {
+            width: 64px !important;
+            height: 64px !important;
+            min-width: 64px !important;
+            min-height: 64px !important;
+            max-width: 64px !important;
+            max-height: 64px !important;
+            border-radius: 50%;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            flex-grow: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg,#00bcd4 0%,#2196f3 100%);
+            box-shadow: 0 4px 16px #00bcd488,0 0 0 4px #fff;
+            margin-bottom: 12px;
+        }
+        #tabContent-about,
+        #tabContent-friends,
+        #tabContent-search {
+            min-height: 340px;
+        }
+
+        /* 成功動畫 */
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .success-animation {
+            animation: successPulse 0.6s ease-in-out;
+        }
+
+        /* 載入動畫 */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            Membership
+        </div>
+        <div class="content">
+            <div id="loading" style="display:none;justify-content:center;align-items:center;height:100%;width:100%;position:absolute;top:0;left:0;z-index:2000;background:rgba(34,40,49,0.98);font-size:22px;font-weight:bold;letter-spacing:2px;">載入中...</div>
+            
+            <!-- 歡迎卡片 -->
+            <div class="welcome-card" id="welcomeCard" onclick="toggleWelcomeCard()">
+                <h2 class="welcome-title">🚀 開始你的鐵人之旅</h2>
+                <p class="welcome-text">歡迎使用《三項都會累》課表！<br>
+                這份訓練課表會在你懷疑人生之前<br>
+                先貼心幫你安排好每週該怎麼累得有意義<br>
+                請勇敢註冊帳號享受這段鐵人旅程吧！！！</p>
+                <div class="shrimp-icon">
+                    <img src="../images/shrimp.png" alt="蝦子" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+            </div>
+            
+            <form id="loginForm" class="form-section card">
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="使用者名稱" required>
+                    <div class="error-message" id="usernameError"></div>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="密碼" required>
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+                <button type="submit" class="submit-btn">登入</button>
+                <div class="form-footer">
+                    <span id="switchToRegister">還沒有帳號？立即註冊</span>
+                    <span id="forgotPassword">忘記密碼？</span>
+                </div>
+            </form>
+            <form id="registerForm" class="form-section card" style="display: none;">
+                <div class="input-group">
+                    <input type="text" id="regUsername" placeholder="使用者名稱" required>
+                    <div class="error-message" id="regUsernameError"></div>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="regPassword" placeholder="密碼" required>
+                    <div class="error-message" id="regPasswordError"></div>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="confirmPassword" placeholder="確認密碼" required>
+                    <div class="error-message" id="confirmPasswordError"></div>
+                </div>
+                <button type="submit" class="submit-btn">註冊</button>
+                <div class="form-footer">
+                    <span id="switchToLogin">已有帳號？立即登入</span>
+                </div>
+            </form>
+            <div id="profileCard" class="card" style="background:#232526; border-radius:22px; width:100%; max-width:420px; margin:24px auto 18px auto; overflow-y:auto; box-shadow:0 8px 32px 0 rgba(31,38,135,0.18); padding:0 0 32px 0;">
+                <div style="position:relative; padding:40px 20px 0 20px; display:flex; flex-direction:column; align-items:center;">
+                    <button id="logoutBtn" class="logout-btn" title="登出">
+                        <span class="logout-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16,17 21,12 16,7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                        </span>
+                        <span class="logout-text">登出</span>
+                    </button>
+                    <div id="profileAvatar" style="width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg,#00bcd4 0%,#2196f3 100%); display:flex; align-items:center; justify-content:center; font-size:38px; font-weight:700; color:#fff; box-shadow:0 4px 16px #00bcd488,0 0 0 4px #fff; margin-bottom:12px; cursor:pointer; position:relative; overflow:hidden;" onclick="showAvatarModal()">
+                        <img id="profileAvatarImg" src="" alt="頭像" style="width:100%; height:100%; object-fit:cover; display:none;">
+                        <span id="profileAvatarText">A</span>
+                    </div>
+                    <div style="font-size: 22px; font-weight: bold; margin-bottom:8px;"><span id="profileUsername"></span></div>
+                    <div style="font-size: 14px; color: #b0bec5; margin-bottom:24px;">一般會員</div>
+                    <button id="editProfileBtn" style="background:none;border:none;color:#00eaff;font-size:22px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;margin-bottom:16px;" title="編輯個人資料">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+                    </button>
+                </div>
+                <hr style="border:none; border-top:1.5px solid #2e3a4a; margin:0 24px 24px 24px;">
+                <div class="member-tabs" style="display:flex;position:sticky;top:0;z-index:2;background:#232526;border-radius:22px 22px 0 0;flex:0 0 auto;">
+                    <button class="tab-btn active" id="tab-about" onclick="showTab('about')" style="flex:1;">關於</button>
+                    <button class="tab-btn" id="tab-friends" onclick="showTab('friends')" style="flex:1;">好友</button>
+                    <button class="tab-btn" id="tab-search" onclick="showTab('search')" style="flex:1;">搜尋</button>
+                </div>
+                <div id="tabContent-about" class="tab-content active" style="padding:28px 22px 24px 22px; display:flex; flex-direction:column;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+                        <span class="friends-title">個人資料</span>
+                    </div>
+                    <div class="about-info-row" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;">
+                        <span style="color:#b0bec5;font-size:16px;">年齡</span>
+                        <span id="aboutAge" style="color:#fff;font-size:16px;">-</span>
+                    </div>
+                    <div class="about-info-row" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;">
+                        <span style="color:#b0bec5;font-size:16px;">性別</span>
+                        <span id="aboutGender" style="color:#fff;font-size:16px;">-</span>
+                    </div>
+                    <div class="about-info-row" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;">
+                        <span style="color:#b0bec5;font-size:16px;">身高</span>
+                        <span id="aboutHeight" style="color:#fff;font-size:16px;">-</span>
+                    </div>
+                    <div class="about-info-row" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;">
+                        <span style="color:#b0bec5;font-size:16px;">體重</span>
+                        <span id="aboutWeight" style="color:#fff;font-size:16px;">-</span>
+                    </div>
+                    <div style="font-size:12px;color:#00eaff;margin-top:16px;">（點擊鉛筆可編輯個人資料）</div>
+                    
+                    <!-- 目前課表卡片 -->
+                    <div style="margin-top:32px;background:rgba(255,255,255,0.05);border-radius:16px;padding:24px;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.08);">
+                        <h2 class="friends-title" style="margin:0 0 16px 0;">目前課表</h2>
+                        <div class="goal-card" style="margin-bottom:0;">
+                            <div id="profileCurrentScheduleDiv" style="color:#b0bec5;font-size:15px;line-height:1.6;margin-top:12px;text-align:center;"></div>
+                            <div id="profileCountdownInline" style="font-size:32px;color:#00bcd4;font-weight:900;margin-top:20px;display:none;text-align:center;line-height:1.2;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tabContent-friends" class="tab-content" style="display:none;padding:28px 18px 24px 18px;">
+                    <div class="friends-title">搜尋好友</div>
+                    <div class="search-container-modern">
+                        <input type="text" id="friendsTabFriendSearch" placeholder="搜尋用戶名稱...">
+                        <span class="search-icon search-icon-modern" aria-label="搜尋">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+                                <circle cx="9" cy="9" r="7" stroke="#00eaff" stroke-width="2"/>
+                                <line x1="14.2" y1="14.2" x2="18" y2="18" stroke="#00eaff" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <div id="friendsTabSearchResults" class="search-results"></div>
+                    <hr style="border:none; border-top:1.5px solid #2e3a4a; margin:24px 0;">
+                    <div class="friends-title">我的好友</div>
+                    <div id="friendsList"></div>
+                </div>
+                <div id="tabContent-search" class="tab-content" style="display:none;padding:28px 18px 24px 18px;">
+                    <div class="friends-title">搜尋用戶</div>
+                    <div class="search-container-modern">
+                        <input type="text" id="friendSearch" placeholder="搜尋用戶名稱...">
+                        <span class="search-icon search-icon-modern" aria-label="搜尋">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+                                <circle cx="9" cy="9" r="7" stroke="#00eaff" stroke-width="2"/>
+                                <line x1="14.2" y1="14.2" x2="18" y2="18" stroke="#00eaff" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+            </div>
+        </div>
+        <!-- 導航列將由 nav.js 自動生成 -->
+    </div>
+
+    <!-- 編輯個人資料彈窗 -->
+    <div id="profileEditModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+        <form id="profileEditForm" style="background:#232526;border-radius:22px;padding:32px 28px;min-width:280px;max-width:90vw;box-shadow:0 8px 32px #0008;display:flex;flex-direction:column;gap:18px;">
+            <div style="font-size:20px;color:#fff;font-weight:700;margin-bottom:8px;">編輯個人資料</div>
+            <label style="color:#b0bec5;font-size:15px;display:block;width:100%;">稱呼
+                <input type="text" id="editDisplayName" placeholder="輸入您的稱呼" style="width:100%;padding:8px 12px;border-radius:8px;background:#181c22;color:#fff;border:1px solid #2e3a4a;margin-top:4px;">
+                
+                <div id="displayNameStatus" style="font-size:12px;margin-top:4px;display:none;"></div>
+            </label>
+            <label style="color:#b0bec5;font-size:15px;">性別
+                <select id="editGender" style="width:100%;padding:8px 12px;border-radius:8px;background:#181c22;color:#fff;border:1px solid #2e3a4a;margin-top:4px;">
+                    <option value="">未設定</option>
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                    <option value="other">其他</option>
+                </select>
+            </label>
+            <label style="color:#b0bec5;font-size:15px;display:block;width:100%;">年齡
+                <input type="number" id="editAge" min="0" max="120" placeholder="年齡" style="width:100%;padding:8px 12px;border-radius:8px;background:#181c22;color:#fff;border:1px solid #2e3a4a;margin-top:4px;">
+            </label>
+            <label style="color:#b0bec5;font-size:15px;display:block;width:100%;">身高 (cm)
+                <input type="number" id="editHeight" min="50" max="250" placeholder="身高" style="width:100%;padding:8px 12px;border-radius:8px;background:#181c22;color:#fff;border:1px solid #2e3a4a;margin-top:4px;">
+            </label>
+            <label style="color:#b0bec5;font-size:15px;display:block;width:100%;">體重 (kg)
+                <input type="number" id="editWeight" min="20" max="300" placeholder="體重" style="width:100%;padding:8px 12px;border-radius:8px;background:#181c22;color:#fff;border:1px solid #2e3a4a;margin-top:4px;">
+            </label>
+            <div style="display:flex;gap:16px;margin-top:10px;">
+                <button type="button" id="cancelEditProfile" style="flex:1;padding:12px 0;background:#444;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;">取消</button>
+                <button type="submit" style="flex:1;padding:12px 0;background:#00eaff;border:none;border-radius:8px;color:#222;font-size:15px;font-weight:700;cursor:pointer;">儲存</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 好友個人資料彈窗 -->
+    <div id="friendProfileModal">
+        <div class="modal-content-scroll">
+            <div style="font-size:20px;color:#fff;font-weight:700;margin-bottom:8px;">好友個人資料</div>
+            <div id="friendProfileAvatar">A</div>
+            <div style="font-size:18px;font-weight:bold;margin-bottom:4px;"><span id="friendProfileUsername"></span></div>
+            <div style="width:100%;margin-top:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+                    <span style="color:#b0bec5;font-size:15px;">年齡</span>
+                    <span id="friendProfileAge" style="color:#fff;font-size:15px;">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+                    <span style="color:#b0bec5;font-size:15px;">性別</span>
+                    <span id="friendProfileGender" style="color:#fff;font-size:15px;">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+                    <span style="color:#b0bec5;font-size:15px;">身高</span>
+                    <span id="friendProfileHeight" style="color:#fff;font-size:15px;">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+                    <span style="color:#b0bec5;font-size:15px;">體重</span>
+                    <span id="friendProfileWeight" style="color:#fff;font-size:15px;">-</span>
+                </div>
+            </div>
+            <!-- 目前課表卡片 -->
+            <div style="margin-top:18px;background:rgba(255,255,255,0.05);border-radius:16px;padding:20px;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.08);width:100%;box-sizing:border-box;">
+                <h2 style="margin:0 0 12px 0;color:#00bcd4;font-size:18px;">目前課表</h2>
+                <div class="goal-card" style="margin-bottom:0;">
+                    <div id="friendProfileCurrentScheduleDiv" style="color:#b0bec5;font-size:15px;line-height:1.6;margin-top:10px;text-align:center;"></div>
+                    <div id="friendProfileCountdownInline" style="font-size:32px;color:#00bcd4;font-weight:900;margin-top:18px;display:none;text-align:center;line-height:1.2;"></div>
+                </div>
+            </div>
+            
+            <!-- 共同課表配對卡片 -->
+            <div id="sharedScheduleCard" style="margin-top:20px;background:rgba(255,255,255,0.05);border-radius:18px;padding:20px 18px;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,0.12);border:1px solid rgba(255,255,255,0.08);width:100%;box-sizing:border-box;">
+                <h2 style="margin:0 0 14px 0;color:#00bcd4;font-size:18px;letter-spacing:0.3px;">共同課表配對</h2>
+                
+                <!-- 配對狀態顯示 -->
+                <div id="pairingStatus" style="text-align:center;">
+                    <!-- 未配對狀態 -->
+                    <div id="notPairedState" style="display:block;">
+                        <div style="color:#b0bec5;font-size:14px;margin-bottom:16px;">長按配對按鈕1秒即可開始共同課表</div>
+                        <div style="display:flex;justify-content:center;align-items:center;margin:6px 0 2px 0;">
+                            <button id="pairingButton" style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg, #00bcd4, #0097a7);border:none;color:#fff;font-size:28px;cursor:pointer;transition:transform 0.15s ease, box-shadow 0.2s ease;box-shadow:0 6px 16px rgba(0,188,212,0.35);" onmousedown="startPairing()" onmouseup="stopPairing()" onmouseleave="stopPairing()" ontouchstart="startPairing()" ontouchend="stopPairing()">
+                                <span id="pairingIcon">🤝</span>
+                            </button>
+                        </div>
+                        <div id="pairingProgress" style="margin-top:10px;display:none;padding:0 6px;">
+                            <div style="width:100%;height:6px;background:rgba(255,255,255,0.12);border-radius:3px;overflow:hidden;">
+                                <div id="pairingBar" style="width:0%;height:100%;background:linear-gradient(90deg, #00bcd4, #00eaff);transition:width 0.1s linear;"></div>
+                            </div>
+                            <div style="color:#00eaff;font-size:12px;margin-top:6px;letter-spacing:0.2px;">長按中… 剩餘 <span id="pairingCountdown">1.0</span> 秒</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 已配對狀態 -->
+                    <div id="pairedState" style="display:none;">
+                        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px;">
+                            <div id="partnerAvatar" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, #00bcd4, #0097a7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;overflow:hidden;">A</div>
+                            <div style="text-align:left;">
+                                <div id="partnerName" style="color:#fff;font-size:16px;font-weight:bold;letter-spacing:0.2px;">配對夥伴</div>
+                                <div style="color:#b0bec5;font-size:12px;">共同課表進行中</div>
+                            </div>
+                        </div>
+                        <button id="unpairButton" style="padding:10px 16px;background:#f44336;border:none;border-radius:10px;color:#fff;font-size:14px;cursor:pointer;transition:all 0.2s;box-shadow:0 6px 16px rgba(244,67,54,0.25);" onclick="unpairSchedule()">取消配對</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" id="closeFriendProfileModal" style="margin-top:18px;padding:10px 0;background:#444;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;width:100%;">關閉</button>
+        </div>
+    </div>
+
+    <!-- 頭像選擇彈窗 -->
+    <div id="avatarModal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);z-index:10000;align-items:center;justify-content:center;">
+        <div style="background:#232526;border-radius:22px;padding:32px 28px;min-width:320px;max-width:90vw;max-height:80vh;box-shadow:0 8px 32px #0008;display:flex;flex-direction:column;gap:20px;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:20px;color:#fff;font-weight:700;">選擇頭像</div>
+                <button type="button" onclick="closeAvatarModal()" style="background:none;border:none;color:#b0bec5;font-size:24px;cursor:pointer;">×</button>
+            </div>
+            
+            <!-- 上傳自訂頭像 -->
+            <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:20px;">
+                <div style="font-size:16px;color:#fff;font-weight:600;margin-bottom:12px;">上傳頭像</div>
+                <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
+                <button type="button" onclick="document.getElementById('avatarFileInput').click()" style="width:100%;padding:12px;background:#00eaff;border:none;border-radius:8px;color:#222;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px;">選擇圖片</button>
+                <div style="font-size:12px;color:#b0bec5;">支援 JPG、PNG 格式，檔案大小不超過 5MB</div>
+            </div>
+
+            <!-- 內建頭像選擇 -->
+            <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:20px;">
+                <div style="font-size:16px;color:#fff;font-weight:600;margin-bottom:12px;">選擇頭像</div>
+                <div id="builtinAvatarsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-height:300px;overflow-y:auto;"></div>
+            </div>
+
+            <div style="display:flex;gap:16px;margin-top:10px;">
+                <button type="button" onclick="closeAvatarModal()" style="flex:1;padding:12px 0;background:#444;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ====== 好友與搜尋渲染工具函數（全域可用） ======
+        function renderFriendItem(friend) {
+            const avatarContent = friend.avatarUrl 
+                ? `<img src="${friend.avatarUrl}" alt="${friend.displayText || friend.username}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+                : (friend.displayText || friend.username).charAt(0).toUpperCase();
+            
+            return `
+                <div class="user-info">
+                    <div class="user-avatar" style="cursor:pointer;overflow:hidden;" onclick="showFriendProfile('${friend.id}', '${(friend.displayText || friend.username).replace(/'/g, "\\'")}')">${avatarContent}</div>
+                    <div class="user-name" style="cursor:pointer;color:#00eaff;" onclick="showFriendProfile('${friend.id}', '${(friend.displayText || friend.username).replace(/'/g, "\\'")}')">${friend.displayText || friend.username}</div>
+                </div>
+                <button class="remove-friend-btn" onclick="removeFriend('${friend.id}', this)">移除好友</button>
+            `;
+        }
+        function renderSearchUserItem(user) {
+            const avatarContent = user.avatarUrl 
+                ? `<img src="${user.avatarUrl}" alt="${user.displayText || user.username}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+                : (user.displayText || user.username).charAt(0).toUpperCase();
+            
+            return `
+                <div class="user-info">
+                    <div class="user-avatar" style="overflow:hidden;">${avatarContent}</div>
+                    <div class="user-name">${user.displayText || user.username}</div>
+                </div>
+                ${user.isFriend 
+                    ? '<button class="add-friend-btn" disabled>已是好友</button>'
+                    : `<button class="add-friend-btn" onclick="addFriend('${user.id}', this)">添加好友</button>`
+                }
+            `;
+        }
+
+        // 防抖函數（搬到最前面）
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // ====== 頭像相關函數 ======
+        let builtinAvatars = [];
+
+        // 顯示頭像選擇彈窗
+        function showAvatarModal() {
+            document.getElementById('avatarModal').style.display = 'flex';
+            loadBuiltinAvatars();
+        }
+
+        // 關閉頭像選擇彈窗
+        function closeAvatarModal() {
+            document.getElementById('avatarModal').style.display = 'none';
+        }
+
+        // 載入內建頭像
+        async function loadBuiltinAvatars() {
+            try {
+                const response = await fetch('/api/builtin-avatars');
+                const avatars = await response.json();
+                builtinAvatars = avatars;
+                renderBuiltinAvatars();
+            } catch (error) {
+                console.error('載入內建頭像失敗:', error);
+            }
+        }
+
+        // 渲染內建頭像網格
+        function renderBuiltinAvatars() {
+            const grid = document.getElementById('builtinAvatarsGrid');
+            grid.innerHTML = builtinAvatars.map(avatar => `
+                <div onclick="selectBuiltinAvatar('${avatar.id}', '${avatar.url}')" 
+                     style="width:60px;height:60px;border-radius:50%;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color 0.3s;">
+                    <img src="${avatar.url}" alt="${avatar.name}" style="width:100%;height:100%;object-fit:cover;">
+                </div>
+            `).join('');
+        }
+
+        // 選擇內建頭像
+        async function selectBuiltinAvatar(avatarId, avatarUrl) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/update-avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        avatarType: 'builtin',
+                        avatarUrl: avatarUrl
+                    })
+                });
+
+                const data = await response.json();
+                console.log('選擇內建頭像回應:', data);
+                if (data.success) {
+                    console.log('選擇成功，更新頭像顯示');
+                    updateProfileAvatar(avatarUrl, 'builtin');
+                    await loadUserAvatar(); // サーバーから再取得して同期
+                    closeAvatarModal();
+                    showMessage('頭像更新成功！');
+                } else {
+                    showMessage('頭像更新失敗：' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('選擇頭像失敗:', error);
+                showMessage('頭像更新失敗，請稍後再試', 'error');
+            }
+        }
+
+
+
+        // 更新個人資料頭像顯示
+        function updateProfileAvatar(avatarUrl, avatarType) {
+            const avatarImg = document.getElementById('profileAvatarImg');
+            const avatarText = document.getElementById('profileAvatarText');
+            if (!avatarImg || !avatarText) {
+                console.warn('找不到頭像元素');
+                return;
+            }
+            console.log('更新頭像:', { avatarUrl, avatarType });
+            if (avatarUrl) {
+                // 添加時間戳避免快取問題
+                const timestamp = new Date().getTime();
+                const urlWithTimestamp = avatarUrl.includes('?') 
+                    ? `${avatarUrl}&t=${timestamp}` 
+                    : `${avatarUrl}?t=${timestamp}`;
+                avatarImg.src = urlWithTimestamp;
+                avatarImg.style.display = 'block';
+                avatarText.style.display = 'none';
+                console.log('設置頭像圖片:', urlWithTimestamp);
+                
+                // 添加圖片載入錯誤處理
+                avatarImg.onerror = function() {
+                    console.error('頭像圖片載入失敗:', avatarUrl);
+                    avatarImg.style.display = 'none';
+                    avatarText.style.display = 'block';
+                    // 設置文字頭像 - 使用稱呼或帳號
+                    const displayText = document.getElementById('profileUsername')?.textContent || localStorage.getItem('username') || '';
+                    if (displayText) {
+                        avatarText.textContent = displayText.charAt(0).toUpperCase();
+                    }
+                };
+                
+                avatarImg.onload = function() {
+                    console.log('頭像圖片載入成功:', avatarUrl);
+                };
+            } else {
+                avatarImg.style.display = 'none';
+                avatarText.style.display = 'block';
+                // 設置文字頭像 - 使用稱呼或帳號
+                const displayText = document.getElementById('profileUsername')?.textContent || localStorage.getItem('username') || '';
+                if (displayText) {
+                    avatarText.textContent = displayText.charAt(0).toUpperCase();
+                    console.log('設置文字頭像為:', displayText.charAt(0).toUpperCase());
+                } else {
+                    console.log('沒有找到顯示文字，無法設置文字頭像');
+                }
+                console.log('顯示文字頭像');
+            }
+            localStorage.setItem('userAvatarUrl', avatarUrl);
+            localStorage.setItem('userAvatarType', avatarType);
+        }
+
+        // 載入用戶頭像
+        async function loadUserAvatar() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                const response = await fetch('/api/user-data', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('載入用戶資料:', data);
+                    const profile = data.profile || {};
+                    console.log('用戶資料中的 profile:', profile);
+                    if (profile.avatarUrl) {
+                        console.log('找到頭像URL:', profile.avatarUrl);
+                        updateProfileAvatar(profile.avatarUrl, profile.avatarType || 'builtin');
+                    } else {
+                        console.log('沒有找到頭像URL');
+                        updateProfileAvatar('', '');
+                    }
+                } else {
+                    console.warn('載入用戶資料失敗:', response.status);
+                }
+            } catch (error) {
+                console.error('載入用戶頭像失敗:', error);
+            }
+        }
+
+        // 顯示訊息
+        function showMessage(message, type = 'success') {
+            // 創建訊息元素
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 8px;
+                color: white;
+                font-size: 14px;
+                font-weight: 600;
+                z-index: 10001;
+                background: ${type === 'error' ? '#ff5252' : '#4caf50'};
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+
+            // 顯示動畫
+            setTimeout(() => {
+                messageDiv.style.transform = 'translateX(0)';
+            }, 100);
+
+            // 自動隱藏
+            setTimeout(() => {
+                messageDiv.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(messageDiv);
+                }, 300);
+            }, 3000);
+        }
+
+        // 歡迎卡片展開/收縮功能
+        function toggleWelcomeCard() {
+            const welcomeCard = document.getElementById('welcomeCard');
+            if (welcomeCard) {
+                const isExpanded = welcomeCard.classList.contains('expanded');
+                
+                if (isExpanded) {
+                    // 如果已展開，則收縮成蝦子圖標
+                    welcomeCard.classList.remove('expanded');
+                    welcomeCard.classList.add('collapsed');
+                } else {
+                    // 如果已收縮，則展開顯示完整內容
+                    welcomeCard.classList.remove('collapsed');
+                    welcomeCard.classList.add('expanded');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupAvatarUpload();
+            // 獲取所有需要的元素
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const switchToRegister = document.getElementById('switchToRegister');
+            const switchToLogin = document.getElementById('switchToLogin');
+            const forgotPassword = document.getElementById('forgotPassword');
+            const header = document.querySelector('.header');
+            const profileCard = document.getElementById('profileCard');
+            const profileUsername = document.getElementById('profileUsername');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const friendSearch = document.getElementById('friendSearch');
+            const searchResults = document.getElementById('searchResults');
+            const friendsList = document.getElementById('friendsList');
+            const profileAvatar = document.getElementById('profileAvatar');
+            const welcomeCard = document.getElementById('welcomeCard');
+
+            let currentUser = null;
+            let friends = new Set();
+
+            // 檢查登入狀態
+            async function checkLogin() {
+                const token = localStorage.getItem('token');
+                // 進入會員頁時先顯示 loading
+                document.getElementById('loading').style.display = 'flex';
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'none';
+                profileCard.style.display = 'none';
+                if (!token) {
+                    document.getElementById('loading').style.display = 'none';
+                    showLoginForm();
+                    if (welcomeCard) {
+                        welcomeCard.style.display = 'block';
+                        // 預設為展開狀態
+                        welcomeCard.classList.remove('collapsed');
+                        welcomeCard.classList.add('expanded');
+                    }
+                    return;
+                }
+
+                try {
+                    // 從服務器獲取最新的用戶信息（支援自動刷新）
+                    const response = await authFetch('/api/verify-token');
+
+                    if (!response.ok) {
+                        throw new Error('Token 驗證失敗');
+                    }
+
+                    const data = await response.json();
+                    console.log('Token verification response:', data);
+
+                    if (data.valid && data.user && data.user.username) {
+                        // 更新本地存儲的用戶信息
+                        localStorage.setItem('currentUser', data.user.userId);
+                        localStorage.setItem('username', data.user.username);
+                        // 更新界面
+                        currentUser = { username: data.user.username };
+                        loginForm.style.display = 'none';
+                        registerForm.style.display = 'none';
+                        profileCard.style.display = 'block';
+                        header.textContent = 'Membership';
+                        
+                        // 先設置帳號作為預設顯示
+                        profileUsername.textContent = data.user.username;
+                        
+                        // 不要重置頭像文字，讓 loadUserAvatar 來處理
+                        // if (profileAvatar) {
+                        //     profileAvatar.textContent = data.user.username.charAt(0).toUpperCase();
+                        // }
+                        loadFriends();
+                        showMemberTabs();
+                        // 先設置文字頭像作為預設
+                        const avatarText = document.getElementById('profileAvatarText');
+                        if (avatarText) {
+                            avatarText.textContent = data.user.username.charAt(0).toUpperCase();
+                        }
+                        // 載入用戶頭像和個人資料（包括稱呼）
+                        await loadUserAvatar();
+                        loadAboutInfo();
+                        // 登錄後隱藏歡迎卡片
+                        if (welcomeCard) {
+                            welcomeCard.style.display = 'none';
+                        }
+                    } else {
+                        throw new Error('無效的用戶信息');
+                    }
+                    document.getElementById('loading').style.display = 'none';
+                } catch (error) {
+                    console.error('驗證失敗:', error);
+                    document.getElementById('loading').style.display = 'none';
+                    showLoginForm();
+                }
+            }
+
+            // 顯示登入表單
+            function showLoginForm() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('username');
+                currentUser = null;
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                profileCard.style.display = 'none';
+                header.innerHTML = `
+                    Login
+                `;
+                hideMemberTabs();
+                if (welcomeCard) {
+                    welcomeCard.style.display = 'block';
+                    // 預設為展開狀態
+                    welcomeCard.classList.remove('collapsed');
+                    welcomeCard.classList.add('expanded');
+                }
+            }
+
+            // 顯示註冊表單
+            function showRegisterForm() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('username');
+                currentUser = null;
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                profileCard.style.display = 'none';
+                header.innerHTML = `
+                    Register
+                `;
+                hideMemberTabs();
+                if (welcomeCard) {
+                    welcomeCard.style.display = 'block';
+                    // 預設為展開狀態
+                    welcomeCard.classList.remove('collapsed');
+                    welcomeCard.classList.add('expanded');
+                }
+            }
+
+            // 登出功能
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    clearUserLocalStorage();
+                    currentUser = null;
+                    checkLogin();
+                });
+            }
+
+            // 切換表單顯示
+            if (switchToRegister) {
+                switchToRegister.addEventListener('click', () => {
+                    showRegisterForm();
+                });
+            }
+
+            if (switchToLogin) {
+                switchToLogin.addEventListener('click', () => {
+                    showLoginForm();
+                });
+            }
+
+            // 登入成功後自動刷新個人資料
+            function onLoginSuccess() {
+                if (document.getElementById('tabContent-about')) {
+                    loadAboutInfo();
+                    loadProfileScheduleInfo();
+                }
+            }
+
+            // 修改登入表單提交
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const username = document.getElementById('username').value.trim();
+                    const password = document.getElementById('password').value.trim();
+                    const submitBtn = loginForm.querySelector('.submit-btn');
+                    
+                    document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+                    
+                    // 顯示載入狀態
+                    const originalText = submitBtn.textContent;
+                    submitBtn.innerHTML = '<span class="loading-spinner"></span> 登入中...';
+                    submitBtn.disabled = true;
+                    
+                    try {
+                        const res = await fetch(`${window.location.origin}/api/login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, password })
+                        });
+                        const data = await res.json();
+                        if (data.success && data.token && data.user && data.user.userId && data.user.username) {
+                            // 成功動畫
+                            submitBtn.innerHTML = '✓ 登入成功！';
+                            submitBtn.classList.add('success-animation');
+                            
+                            localStorage.setItem('token', data.token);
+                            localStorage.setItem('currentUser', data.user.userId);
+                            localStorage.setItem('username', data.user.username);
+                            
+                            // 延遲一下再切換頁面，讓用戶看到成功訊息
+                            setTimeout(() => {
+                                checkLogin();
+                                onLoginSuccess();
+                            }, 800);
+                        } else {
+                            // 恢復按鈕狀態
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                            
+                            document.getElementById('usernameError').textContent = data.error || '使用者名稱或密碼錯誤';
+                            document.getElementById('usernameError').style.display = 'block';
+                        }
+                    } catch (error) {
+                        console.error('登入失敗:', error);
+                        // 恢復按鈕狀態
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        
+                        document.getElementById('usernameError').textContent = '登入失敗，請稍後再試';
+                        document.getElementById('usernameError').style.display = 'block';
+                    }
+                });
+            }
+
+            // 註冊成功後自動刷新個人資料
+            if (registerForm) {
+                registerForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const username = document.getElementById('regUsername').value.trim();
+                    const password = document.getElementById('regPassword').value.trim();
+                    const confirmPassword = document.getElementById('confirmPassword').value.trim();
+                    const submitBtn = registerForm.querySelector('.submit-btn');
+                    
+                    document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+                    if (password !== confirmPassword) {
+                        document.getElementById('confirmPasswordError').textContent = '密碼不一致';
+                        document.getElementById('confirmPasswordError').style.display = 'block';
+                        return;
+                    }
+                    
+                    // 顯示載入狀態
+                    const originalText = submitBtn.textContent;
+                    submitBtn.innerHTML = '<span class="loading-spinner"></span> 註冊中...';
+                    submitBtn.disabled = true;
+                    
+                    try {
+                        const res = await fetch(`${window.location.origin}/api/register`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, password })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.token && data.user && data.user.userId && data.user.username) {
+                                // 成功動畫
+                                submitBtn.innerHTML = '✓ 註冊成功！';
+                                submitBtn.classList.add('success-animation');
+                                
+                                localStorage.setItem('token', data.token);
+                                localStorage.setItem('currentUser', data.user.userId);
+                                localStorage.setItem('username', data.user.username);
+                                
+                                // 延遲一下再切換頁面，讓用戶看到成功訊息
+                                setTimeout(() => {
+                                    checkLogin();
+                                    onLoginSuccess();
+                                }, 800);
+                            } else {
+                                throw new Error('註冊回應格式錯誤');
+                            }
+                        } else {
+                            const data = await res.json();
+                            // 恢復按鈕狀態
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                            
+                            document.getElementById('regUsernameError').textContent = data.error || '註冊失敗';
+                            document.getElementById('regUsernameError').style.display = 'block';
+                        }
+                    } catch (error) {
+                        console.error('註冊失敗:', error);
+                        // 恢復按鈕狀態
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        
+                        document.getElementById('regUsernameError').textContent = '註冊失敗，請稍後再試';
+                        document.getElementById('regUsernameError').style.display = 'block';
+                    }
+                });
+            }
+
+            // 好友管理功能
+            window.addFriend = async function(friendId, button) {
+                try {
+                    const response = await fetch('/api/add-friend', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({ friendId })
+                    });
+                    if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.error || '添加好友失敗');
+                    }
+                    button.disabled = true;
+                    button.textContent = '已是好友';
+                    await loadFriends();
+                } catch (error) {
+                    console.error('添加好友失敗:', error);
+                    alert(error.message);
+                }
+            };
+            window.removeFriend = async function(friendId, button) {
+                if (!confirm('確定要移除這位好友嗎？')) return;
+                try {
+                    const userId = localStorage.getItem('currentUser');
+                    const response = await fetch('/api/remove-friend', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({ friendId })
+                    });
+                    if (!response.ok) {
+                        let data = {};
+                        try {
+                            data = await response.json();
+                        } catch (e) {
+                            throw new Error('伺服器錯誤或 API 路徑錯誤');
+                        }
+                        throw new Error(data.error || '移除好友失敗');
+                    }
+                    await loadFriends();
+                } catch (error) {
+                    console.error('移除好友失敗:', error);
+                    alert(error.message);
+                }
+            };
+            // 搜尋用戶功能
+            if (document.getElementById('friendSearch')) {
+                document.getElementById('friendSearch').addEventListener('input', debounce(async (e) => {
+                    const searchTerm = e.target.value.trim();
+                    const searchResults = document.getElementById('searchResults');
+                    if (!searchTerm) {
+                        searchResults.style.display = 'none';
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`/api/search-users?query=${encodeURIComponent(searchTerm)}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
+                        if (!response.ok) {
+                            throw new Error('搜尋失敗');
+                        }
+                        const users = await response.json();
+                        searchResults.innerHTML = '';
+                        if (users.length === 0) {
+                            searchResults.innerHTML = '<div class="user-item">沒有找到用戶</div>';
+                        } else {
+                            users.forEach(user => {
+                                const userItem = document.createElement('div');
+                                userItem.className = 'user-item';
+                                userItem.innerHTML = renderSearchUserItem(user);
+                                searchResults.appendChild(userItem);
+                            });
+                        }
+                        searchResults.style.display = 'block';
+                    } catch (error) {
+                        console.error('搜尋用戶失敗:', error);
+                        searchResults.innerHTML = '<div class="user-item">搜尋失敗</div>';
+                        searchResults.style.display = 'block';
+                    }
+                }, 300));
+            }
+            // 好友列表渲染
+            async function loadFriends() {
+                const friendsList = document.getElementById('friendsList');
+                if (!friendsList) return;
+                try {
+                    const response = await fetch('/api/friends', {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('獲取好友列表失敗');
+                    }
+                    const friends = await response.json();
+                    
+                    // 渲染好友列表
+                    friendsList.innerHTML = '';
+                    if (friends.length === 0) {
+                        friendsList.innerHTML = '<div class="no-friends">還沒有好友，快來添加吧！</div>';
+                    } else {
+                        friends.forEach(friend => {
+                            const friendItem = document.createElement('div');
+                            friendItem.className = 'user-item';
+                            friendItem.innerHTML = renderFriendItem(friend);
+                            friendsList.appendChild(friendItem);
+                        });
+                    }
+                } catch (error) {
+                    console.error('載入好友列表失敗:', error);
+                    friendsList.innerHTML = '<div class="error">載入好友列表失敗</div>';
+                }
+            }
+
+            // 頁面載入時檢查登入狀態
+            checkLogin();
+
+            if (document.getElementById('tabContent-about')) {
+                loadAboutInfo();
+                loadProfileScheduleInfo();
+            }
+            if (document.getElementById('editProfileBtn')) {
+                document.getElementById('editProfileBtn').onclick = () => {
+                    document.getElementById('profileEditModal').style.display = 'flex';
+                };
+            }
+            
+            // 綁定稱呼輸入框的即時檢查
+            const editDisplayNameInput = document.getElementById('editDisplayName');
+            if (editDisplayNameInput) {
+                editDisplayNameInput.addEventListener('input', (e) => {
+                    const displayName = e.target.value.trim();
+                    debouncedCheckDisplayName(displayName);
+                });
+                
+                // 當輸入框失去焦點時也檢查
+                editDisplayNameInput.addEventListener('blur', (e) => {
+                    const displayName = e.target.value.trim();
+                    if (displayName) {
+                        checkDisplayNameAvailability(displayName);
+                    }
+                });
+            }
+            if (document.getElementById('cancelEditProfile')) {
+                document.getElementById('cancelEditProfile').onclick = () => {
+                    document.getElementById('profileEditModal').style.display = 'none';
+                };
+            }
+            if (document.getElementById('profileEditForm')) {
+                document.getElementById('profileEditForm').onsubmit = saveProfileData;
+            }
+
+            setupAvatarUpload();
+            checkLogin();
+        });
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.querySelectorAll('#profileCard .tab-content').forEach(div => div.style.display = 'none');
+            document.getElementById('tabContent-' + tab).style.display = 'block';
+            if (tab === 'about') {
+                loadAboutInfo();
+                loadProfileScheduleInfo();
+            }
+        }
+
+        function showMemberTabs() {
+            // 已合併卡片，無需顯示/隱藏分頁
+        }
+
+        function hideMemberTabs() {
+            // 已合併卡片，無需顯示/隱藏分頁
+        }
+
+        // 新增個人資料同步與 modal 控制
+        function loadAboutInfo() {
+            const userId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            if (!userId || !token) return;
+            fetch(`/api/user-data/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(res => res.json()).then(data => {
+                let d = data;
+                while (d && d.data) d = d.data;
+                const profile = d.profile || {};
+                
+                // 載入稱呼並更新顯示
+                const displayName = profile.displayName || '';
+                const username = localStorage.getItem('username') || '';
+                
+                // 如果有稱呼則顯示稱呼，否則顯示帳號
+                const displayText = displayName || username;
+                document.getElementById('profileUsername').textContent = displayText;
+                
+                // 更新頭像文字
+                const avatarText = document.getElementById('profileAvatarText');
+                if (avatarText) {
+                    avatarText.textContent = displayText.charAt(0).toUpperCase();
+                }
+                
+                document.getElementById('aboutAge').textContent = profile.age || '-';
+                document.getElementById('aboutGender').textContent = profile.gender === 'male' ? '男性' : profile.gender === 'female' ? '女性' : (profile.gender === 'other' ? '其他' : '-');
+                document.getElementById('aboutHeight').textContent = profile.height ? profile.height + ' CM' : '-';
+                document.getElementById('aboutWeight').textContent = profile.weight ? profile.weight + ' 公斤' : '-';
+                
+                // 載入編輯表單的值
+                document.getElementById('editDisplayName').value = displayName || '';
+                document.getElementById('editGender').value = profile.gender || '';
+                document.getElementById('editAge').value = profile.age || '';
+                document.getElementById('editHeight').value = profile.height || '';
+                document.getElementById('editWeight').value = profile.weight || '';
+                
+                // 載入課表資訊
+                loadProfileScheduleInfo();
+            });
+        }
+        
+        // 課表顯示相關函數
+        function loadProfileScheduleInfo() {
+            renderProfileCurrentSchedule();
+            renderProfileCountdownInline();
+        }
+        
+        // 顯示目前課表資訊
+        async function renderProfileCurrentSchedule() {
+            const profileCurrentScheduleDiv = document.getElementById('profileCurrentScheduleDiv');
+            if (!profileCurrentScheduleDiv) return;
+
+            const userId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            let selectedSchedule = '';
+            let selectedDistance = '';
+            let selectedLevel = '';
+
+            if (userId && token) {
+                try {
+                    const res = await fetch(`/api/user-data/${userId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        let data = await res.json();
+                        while (data && data.data) data = data.data;
+                        selectedSchedule = data.selectedScheduleType || '';
+                        selectedDistance = data.selectedScheduleDistance || '';
+                        selectedLevel = data.selectedScheduleLevel || '';
+                    }
+                } catch (e) {
+                    console.error('雲端課表資料載入失敗', e);
+                }
+            }
+
+            let html = '';
+            if (selectedSchedule && selectedDistance) {
+                html = `<span style='font-size:17px;color:#fff;'>已選擇:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedSchedule} / ${selectedDistance}</span>`;
+            } else if (selectedSchedule) {
+                html = `<span style='font-size:17px;color:#fff;'>已選擇:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedSchedule}</span>`;
+            } else if (selectedDistance) {
+                html = `<span style='font-size:17px;color:#fff;'>已選擇距離:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedDistance}</span>`;
+            } else {
+                html = '<span style="font-size:17px;color:#fff;">尚未選擇課表</span>';
+            }
+
+            if (selectedLevel) {
+                let levelImg = '';
+                let levelAlt = '';
+                let levelColor = '';
+                let levelShadow = '';
+                if (selectedLevel === '軟腳蝦') {
+                    levelImg = '../images/shrimp.png';
+                    levelAlt = '軟腳蝦';
+                    levelColor = '#00bcd4';
+                    levelShadow = '0 2px 8px #00bcd4cc,0 0 0 4px #fff';
+                } else if (selectedLevel === '滑水鴨') {
+                    levelImg = '../images/duck.png';
+                    levelAlt = '滑水鴨';
+                    levelColor = '#ffd600';
+                    levelShadow = '0 2px 8px #ffd600cc,0 0 0 4px #fff';
+                } else if (selectedLevel === '老鳥') {
+                    levelImg = '../images/eagle.png';
+                    levelAlt = '老鳥';
+                    levelColor = '#ff5252';
+                    levelShadow = '0 2px 8px #ff5252cc,0 0 0 4px #fff';
+                }
+                html += `<div style='margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:6px;'>
+                    <div style='color:#fff;font-size:13px;font-weight:600;margin-bottom:2px;'>課表等級</div>
+                    <img src='${levelImg}' alt='${levelAlt}' style='width:64px;height:64px;object-fit:cover;border-radius:50%;box-shadow:${levelShadow};background:#222;'/>
+                    <div style='font-size:15px;color:${levelColor};font-weight:600;letter-spacing:2px;'>${selectedLevel}</div>
+                </div>`;
+            }
+            profileCurrentScheduleDiv.innerHTML = html;
+        }
+        
+        // 顯示倒數計時
+        function renderProfileCountdownInline() {
+            const profileCountdownInline = document.getElementById('profileCountdownInline');
+            if (!profileCountdownInline) return;
+            
+            const selectedSchedule = getSelectedSchedule('selectedScheduleType');
+            const selectedDistance = getSelectedSchedule('selectedScheduleDistance');
+            let raceDate = null, offsetDays = 236, scheduleLen = 34;
+            
+            if(selectedSchedule==='Challenge Taiwan' && selectedDistance==='226') {
+                raceDate = new Date(2026, 3, 25);
+                offsetDays = 236;
+                scheduleLen = 34;
+            } else if(selectedSchedule==='Ironman' && selectedDistance==='113') {
+                raceDate = new Date(2025, 10, 2);
+                offsetDays = 167;
+                scheduleLen = 24;
+            } else if(selectedSchedule==='LAVA 完賽樂園' && selectedDistance==='113') {
+                raceDate = new Date(2026, 2, 14);
+                offsetDays = 167;
+                scheduleLen = 24;
+            } else if(selectedSchedule==='Challenge Taiwan' && selectedDistance==='113') {
+                raceDate = new Date(2026, 3, 25);
+                offsetDays = 167;
+                scheduleLen = 24;
+            }
+            
+            if(raceDate) {
+                profileCountdownInline.style.display = '';
+                updateProfileCountdownInline();
+                if(window.profileCountdownInlineTimer) clearInterval(window.profileCountdownInlineTimer);
+                window.profileCountdownInlineTimer = setInterval(updateProfileCountdownInline, 1000);
+            } else {
+                profileCountdownInline.style.display = 'none';
+                if(window.profileCountdownInlineTimer) clearInterval(window.profileCountdownInlineTimer);
+            }
+        }
+        
+        function updateProfileCountdownInline() {
+            const profileCountdownInline = document.getElementById('profileCountdownInline');
+            if (!profileCountdownInline) return;
+            
+            const selectedSchedule = getSelectedSchedule('selectedScheduleType');
+            const selectedDistance = getSelectedSchedule('selectedScheduleDistance');
+            let raceDate = null, offsetDays = 236, scheduleLen = 34;
+            
+            if(selectedSchedule==='Challenge Taiwan' && selectedDistance==='226') {
+                raceDate = new Date(2026, 3, 25, 0, 0, 0);
+                offsetDays = 236;
+                scheduleLen = 34;
+            } else if(selectedSchedule==='Ironman' && selectedDistance==='113') {
+                raceDate = new Date(2025, 10, 2, 0, 0, 0);
+                offsetDays = 167;
+                scheduleLen = 24;
+            } else if(selectedSchedule==='LAVA 完賽樂園' && selectedDistance==='113') {
+                raceDate = new Date(2026, 2, 14, 0, 0, 0);
+                offsetDays = 167;
+                scheduleLen = 24;
+            } else if(selectedSchedule==='Challenge Taiwan' && selectedDistance==='113') {
+                raceDate = new Date(2026, 3, 25, 0, 0, 0);
+                offsetDays = 167;
+                scheduleLen = 24;
+            }
+            
+            if(!raceDate) return;
+            const startDate = new Date(raceDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+            const now = new Date();
+            if(now < startDate) {
+                const diff = startDate - now;
+                const days = Math.ceil(diff/(1000*60*60*24));
+                profileCountdownInline.innerHTML = `<span style='font-size:40px;font-weight:900;color:#00bcd4;'>${days}</span><span style='font-size:20px;color:#b0bec5;font-weight:500;'> 天</span><div style='font-size:15px;color:#b0bec5;margin-top:2px;'>距離課表開始</div>`;
+                return;
+            }
+            const daysSinceStart = Math.floor((now - startDate)/(1000*60*60*24));
+            let weekIdx = Math.floor(daysSinceStart/7);
+            if(weekIdx >= scheduleLen) weekIdx = scheduleLen-1;
+            profileCountdownInline.innerHTML = `<span style='font-size:22px;color:#00bcd4;font-weight:700;'>課表已開始！</span><div style='font-size:16px;color:#b0bec5;margin-top:6px;'>目前進度：第${weekIdx+1}週</div>`;
+        }
+        
+        // 課表相關工具函數
+        function getUserKey(key) {
+            const user = localStorage.getItem('currentUser');
+            return user ? `${key}_${user}` : key;
+        }
+        
+        function setUserData(key, value) {
+            const userKey = getUserKey(key);
+            localStorage.setItem(userKey, JSON.stringify(value));
+        }
+        
+        function getUserData(key, defaultValue = null) {
+            const userKey = getUserKey(key);
+            const data = localStorage.getItem(userKey);
+            return data ? JSON.parse(data) : defaultValue;
+        }
+        
+        function getSelectedSchedule(key) {
+            return getUserData(key, '');
+        }
+        
+        function saveSelectedSchedule(type, distance, level) {
+            setUserData('selectedScheduleType', type);
+            setUserData('selectedScheduleDistance', distance);
+            setUserData('selectedScheduleLevel', level);
+        }
+        function saveProfileData(e) {
+            e.preventDefault();
+            const userId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            if (!userId || !token) return;
+            
+            const displayName = document.getElementById('editDisplayName').value.trim();
+            const gender = document.getElementById('editGender').value;
+            const age = document.getElementById('editAge').value;
+            const height = document.getElementById('editHeight').value;
+            const weight = document.getElementById('editWeight').value;
+            
+            // 先檢查稱呼是否可用
+            if (displayName) {
+                fetch(`/api/check-display-name/${encodeURIComponent(displayName)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(res => res.json()).then(checkResult => {
+                    if (!checkResult.available) {
+                        // 稱呼不可用，顯示錯誤並阻止保存
+                        showMessage(checkResult.error, 'error');
+                        const displayNameInput = document.getElementById('editDisplayName');
+                        displayNameInput.style.borderColor = '#ff5252';
+                        displayNameInput.style.boxShadow = '0 0 0 2px rgba(255, 82, 82, 0.2)';
+                        setTimeout(() => {
+                            displayNameInput.style.borderColor = '#2e3a4a';
+                            displayNameInput.style.boxShadow = 'none';
+                        }, 3000);
+                        return;
+                    }
+                    
+                    // 稱呼可用，繼續保存流程
+                    proceedWithSave();
+                }).catch(error => {
+                    console.error('檢查稱呼失敗:', error);
+                    showMessage('檢查稱呼時發生錯誤，請稍後再試', 'error');
+                });
+            } else {
+                // 沒有稱呼，直接保存
+                proceedWithSave();
+            }
+            
+            // 實際保存資料的函數
+            function proceedWithSave() {
+                // 先從伺服器獲取現有數據
+                fetch(`/api/user-data/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(res => res.json()).then(result => {
+                    // 解開所有 data 層
+                    let existingData = result;
+                    while (existingData && existingData.data) {
+                        existingData = existingData.data;
+                    }
+                    const updatedData = {
+                        ...existingData,
+                        profile: { 
+                            displayName: displayName,
+                            gender, 
+                            age, 
+                            height, 
+                            weight,
+                            // 保留現有的頭像資訊
+                            avatarUrl: existingData.profile?.avatarUrl,
+                            avatarType: existingData.profile?.avatarType
+                        }
+                    };
+                    
+                    return fetch(`/api/user-data/${userId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ data: updatedData })
+                    });
+                }).then(res => res.json()).then(data => {
+                    if (data.error) {
+                        // 處理錯誤
+                        if (data.error.includes('稱呼已被使用')) {
+                            showMessage('稱呼已被使用，請選擇其他稱呼', 'error');
+                            // 將稱呼輸入框標記為錯誤狀態
+                            const displayNameInput = document.getElementById('editDisplayName');
+                            displayNameInput.style.borderColor = '#ff5252';
+                            displayNameInput.style.boxShadow = '0 0 0 2px rgba(255, 82, 82, 0.2)';
+                            // 3秒後恢復正常狀態
+                            setTimeout(() => {
+                                displayNameInput.style.borderColor = '#2e3a4a';
+                                displayNameInput.style.boxShadow = 'none';
+                            }, 3000);
+                        } else {
+                            showMessage(data.error, 'error');
+                        }
+                        return;
+                    }
+                    
+                    // 更新頁面顯示
+                    const username = localStorage.getItem('username') || '';
+                    const displayText = displayName || username;
+                    document.getElementById('profileUsername').textContent = displayText;
+                    
+                    // 更新頭像文字
+                    const avatarText = document.getElementById('profileAvatarText');
+                    if (avatarText) {
+                        avatarText.textContent = displayText.charAt(0).toUpperCase();
+                    }
+                    
+                    console.log('Profile saved!', { displayName, gender, age, height, weight });
+                    document.getElementById('profileEditModal').style.display = 'none';
+                    loadAboutInfo();
+                    
+                    // 顯示成功訊息
+                    showMessage('個人資料更新成功！', 'success');
+                }).catch(error => {
+                    console.error('保存失敗:', error);
+                    showMessage('儲存失敗，請稍後再試', 'error');
+                });
+            }
+        }
+
+        function editProfileInline(field) {
+            const fieldMap = {
+                age: {label: '年齡', type: 'number', min: 0, max: 120},
+                gender: {label: '性別', type: 'select', options: [{value:'',text:'未設定'},{value:'male',text:'男'},{value:'female',text:'女'},{value:'other',text:'其他'}]},
+                height: {label: '身高', type: 'number', min: 50, max: 250},
+                weight: {label: '體重', type: 'number', min: 20, max: 300}
+            };
+            const el = document.getElementById('about' + field.charAt(0).toUpperCase() + field.slice(1));
+            if (!el) return;
+            const oldValue = el.textContent === '-' ? '' : el.textContent.replace(/[^\d.\w一-龥]/g, '');
+            let input;
+            if (fieldMap[field].type === 'select') {
+                input = document.createElement('select');
+                fieldMap[field].options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    input.appendChild(option);
+                });
+                input.value = oldValue === '男性' ? 'male' : oldValue === '女性' ? 'female' : oldValue === '其他' ? 'other' : '';
+            } else {
+                input = document.createElement('input');
+                input.type = 'number';
+                input.min = fieldMap[field].min;
+                input.max = fieldMap[field].max;
+                input.value = oldValue;
+                input.style.width = '60px';
+            }
+            input.style.fontSize = '16px';
+            input.style.borderRadius = '6px';
+            input.style.padding = '2px 6px';
+            input.style.marginLeft = '8px';
+            input.onblur = () => saveProfileInline(field, input.value);
+            input.onkeydown = e => { if (e.key === 'Enter') { input.blur(); } };
+            el.replaceWith(input);
+            input.focus();
+        }
+        function saveProfileInline(field, value) {
+            const userId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            if (!userId || !token) return;
+            
+            // 先從伺服器獲取現有數據
+            fetch(`/api/user-data/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(res => res.json()).then(result => {
+                // 解開所有 data 層
+                let existingData = result;
+                while (existingData && existingData.data) {
+                    existingData = existingData.data;
+                }
+                const profile = existingData.profile || {};
+                
+                if (field === 'gender') {
+                    profile.gender = value;
+                } else if (field === 'age') {
+                    profile.age = value;
+                } else if (field === 'height') {
+                    profile.height = value;
+                } else if (field === 'weight') {
+                    profile.weight = value;
+                }
+                
+                const updatedData = {
+                    ...existingData,
+                    profile: profile
+                };
+                
+                return fetch(`/api/user-data/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ data: updatedData })
+                });
+            }).then(() => {
+                // 不再寫入 localStorage，直接重新載入
+                loadAboutInfo();
+            }).catch(error => {
+                console.error('儲存個人資料失敗:', error);
+            });
+        }
+
+        // 尋找好友功能 for 好友分頁
+        if (document.getElementById('friendsTabFriendSearch')) {
+            document.getElementById('friendsTabFriendSearch').addEventListener('input', debounce(async (e) => {
+                const searchTerm = e.target.value.trim();
+                const searchResults = document.getElementById('friendsTabSearchResults');
+                if (!searchTerm) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
+                try {
+                    // 獲取當前用戶的好友列表
+                    const response = await fetch('/api/friends', {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('獲取好友列表失敗');
+                    }
+                    const friends = await response.json();
+                    
+                    // 在好友列表中搜尋（搜尋稱呼或帳號）
+                    const filteredFriends = friends.filter(friend => {
+                        const searchText = searchTerm.toLowerCase();
+                        const displayText = (friend.displayText || friend.username).toLowerCase();
+                        const username = friend.username.toLowerCase();
+                        
+                        return displayText.includes(searchText) || username.includes(searchText);
+                    });
+                    
+                    searchResults.innerHTML = '';
+                    if (filteredFriends.length === 0) {
+                        searchResults.innerHTML = '<div class="user-item">沒有找到好友</div>';
+                    } else {
+                        filteredFriends.forEach(friend => {
+                            const userItem = document.createElement('div');
+                            userItem.className = 'user-item';
+                            userItem.innerHTML = renderFriendItem(friend);
+                            searchResults.appendChild(userItem);
+                        });
+                    }
+                    searchResults.style.display = 'block';
+                } catch (error) {
+                    console.error('搜尋好友失敗:', error);
+                    searchResults.innerHTML = '<div class="user-item">搜尋失敗</div>';
+                    searchResults.style.display = 'block';
+                }
+            }, 300));
+        }
+
+        function clearUserLocalStorage() {
+            const userId = localStorage.getItem('currentUser');
+            if (userId) {
+                const keys = [
+                    'profile', 'trainingGoals', 'calendarEvents', 'schedules', 'todaySchedule',
+                    'chatHistory', 'selectedScheduleType', 'selectedScheduleDistance',
+                    'selectedScheduleLevel', 'events'
+                ];
+                keys.forEach(key => localStorage.removeItem(`${key}_${userId}`));
+            }
+            localStorage.removeItem('token');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('username');
+        }
+
+        // 配對相關變數
+        let pairingTimer = null;
+        let pairingProgress = 0;
+        let currentFriendId = null;
+        let currentFriendUsername = null;
+
+        window.showFriendProfile = function(friendId, username) {
+            const modal = document.getElementById('friendProfileModal');
+            modal.style.display = 'flex';
+            document.getElementById('friendProfileUsername').textContent = username;
+            
+            // 儲存當前好友資訊
+            currentFriendId = friendId;
+            currentFriendUsername = username;
+            
+            // 先設置預設文字頭像
+            const friendProfileAvatar = document.getElementById('friendProfileAvatar');
+            friendProfileAvatar.textContent = username.charAt(0).toUpperCase();
+            friendProfileAvatar.style.overflow = 'hidden';
+            
+            // 預設 loading 狀態
+            document.getElementById('friendProfileAge').textContent = '-';
+            document.getElementById('friendProfileGender').textContent = '-';
+            document.getElementById('friendProfileHeight').textContent = '-';
+            document.getElementById('friendProfileWeight').textContent = '-';
+            document.getElementById('friendProfileCurrentScheduleDiv').textContent = '載入中...';
+            document.getElementById('friendProfileCountdownInline').style.display = 'none';
+            
+            // 初始化配對狀態
+            initializePairingState();
+            
+            // 載入好友資料
+            fetch(`/api/public-profile/${friendId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const profile = data.profile || {};
+                    
+                    // 更新頭像顯示
+                    if (profile.avatarUrl) {
+                        friendProfileAvatar.innerHTML = `<img src="${profile.avatarUrl}" alt="${username}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                    } else {
+                        friendProfileAvatar.textContent = username.charAt(0).toUpperCase();
+                    }
+                    
+                    document.getElementById('friendProfileAge').textContent = (profile.age ? profile.age : '未填寫');
+                    document.getElementById('friendProfileGender').textContent = profile.gender === 'male' ? '男性' : profile.gender === 'female' ? '女性' : (profile.gender === 'other' ? '其他' : '未填寫');
+                    document.getElementById('friendProfileHeight').textContent = (profile.height ? profile.height + ' CM' : '未填寫');
+                    document.getElementById('friendProfileWeight').textContent = (profile.weight ? profile.weight + ' 公斤' : '未填寫');
+                    
+                    // 載入好友課表資料
+                    renderFriendCurrentSchedule(data.selectedScheduleType, data.selectedScheduleDistance, data.selectedScheduleLevel);
+                    renderFriendCountdownInline(data.selectedScheduleType, data.selectedScheduleDistance);
+                });
+        };
+        
+        // 渲染好友目前課表
+        function renderFriendCurrentSchedule(selectedSchedule, selectedDistance, selectedLevel) {
+            const friendProfileCurrentScheduleDiv = document.getElementById('friendProfileCurrentScheduleDiv');
+            if (!friendProfileCurrentScheduleDiv) return;
+            
+            let html = '';
+            if (selectedSchedule && selectedDistance) {
+                html = `<span style='font-size:17px;color:#fff;'>已選擇:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedSchedule} / ${selectedDistance}</span>`;
+            } else if (selectedSchedule) {
+                html = `<span style='font-size:17px;color:#fff;'>已選擇:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedSchedule}</span>`;
+            } else if (selectedDistance) {
+                html = `<span style='font-size:17px;color:#fff;'>已選擇距離:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedDistance}</span>`;
+            } else {
+                html = '<span style="font-size:17px;color:#fff;">尚未選擇課表</span>';
+            }
+            
+            if (selectedLevel) {
+                let levelImg = '';
+                let levelAlt = '';
+                let levelColor = '';
+                let levelShadow = '';
+                if (selectedLevel === '軟腳蝦') {
+                    levelImg = '../images/shrimp.png';
+                    levelAlt = '軟腳蝦';
+                    levelColor = '#00bcd4';
+                    levelShadow = '0 2px 8px #00bcd4cc,0 0 0 4px #fff';
+                } else if (selectedLevel === '滑水鴨') {
+                    levelImg = '../images/duck.png';
+                    levelAlt = '滑水鴨';
+                    levelColor = '#ffd600';
+                    levelShadow = '0 2px 8px #ffd600cc,0 0 0 4px #fff';
+                } else if (selectedLevel === '老鳥') {
+                    levelImg = '../images/eagle.png';
+                    levelAlt = '老鳥';
+                    levelColor = '#ff5252';
+                    levelShadow = '0 2px 8px #ff5252cc,0 0 0 4px #fff';
+                }
+                html += `<div style='margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:6px;'>
+                    <div style='color:#fff;font-size:13px;font-weight:600;margin-bottom:2px;'>課表等級</div>
+                    <img src='${levelImg}' alt='${levelAlt}' style='width:64px;height:64px;object-fit:cover;border-radius:50%;box-shadow:${levelShadow};background:#222;'/>
+                    <div style='font-size:15px;color:${levelColor};font-weight:600;letter-spacing:2px;'>${selectedLevel}</div>
+                </div>`;
+            }
+            friendProfileCurrentScheduleDiv.innerHTML = html;
+        }
+        
+        // 渲染好友倒數計時
+        function renderFriendCountdownInline(selectedSchedule, selectedDistance) {
+            const friendProfileCountdownInline = document.getElementById('friendProfileCountdownInline');
+            if (!friendProfileCountdownInline) return;
+            
+            let raceDate = null, offsetDays = 236, scheduleLen = 34;
+            
+            if(selectedSchedule==='Challenge Taiwan' && selectedDistance==='226') {
+                raceDate = new Date(2026, 3, 25);
+                offsetDays = 236;
+                scheduleLen = 34;
+            } else if(selectedSchedule==='Ironman' && selectedDistance==='113') {
+                raceDate = new Date(2025, 10, 2);
+                offsetDays = 167;
+                scheduleLen = 24;
+            } else if(selectedSchedule==='LAVA 完賽樂園' && selectedDistance==='113') {
+                raceDate = new Date(2026, 2, 14);
+                offsetDays = 167;
+                scheduleLen = 24;
+            } else if(selectedSchedule==='Challenge Taiwan' && selectedDistance==='113') {
+                raceDate = new Date(2026, 3, 25);
+                offsetDays = 167;
+                scheduleLen = 24;
+            }
+            
+            if(raceDate) {
+                friendProfileCountdownInline.style.display = '';
+                updateFriendCountdownInline();
+                if(window.friendProfileCountdownInlineTimer) clearInterval(window.friendProfileCountdownInlineTimer);
+                window.friendProfileCountdownInlineTimer = setInterval(updateFriendCountdownInline, 1000);
+            } else {
+                friendProfileCountdownInline.style.display = 'none';
+                if(window.friendProfileCountdownInlineTimer) clearInterval(window.friendProfileCountdownInlineTimer);
+            }
+        }
+        
+        function updateFriendCountdownInline() {
+            const friendProfileCountdownInline = document.getElementById('friendProfileCountdownInline');
+            if (!friendProfileCountdownInline) return;
+            
+            // 從 modal 中取得課表資訊
+            const selectedSchedule = document.getElementById('friendProfileCurrentScheduleDiv').textContent.includes('Challenge Taiwan') ? 'Challenge Taiwan' : 
+                                   document.getElementById('friendProfileCurrentScheduleDiv').textContent.includes('Ironman') ? 'Ironman' : 
+                                   document.getElementById('friendProfileCurrentScheduleDiv').textContent.includes('LAVA 完賽樂園') ? 'LAVA 完賽樂園' : '';
+            const selectedDistance = document.getElementById('friendProfileCurrentScheduleDiv').textContent.includes('226') ? '226' : 
+                                   document.getElementById('friendProfileCurrentScheduleDiv').textContent.includes('113') ? '113' : '';
+            
+            let raceDate = null, offsetDays = 236, scheduleLen = 34;
+            
+            if(selectedSchedule==='Challenge Taiwan' && selectedDistance==='226') {
+                raceDate = new Date(2026, 3, 25, 0, 0, 0);
+                offsetDays = 236;
+                scheduleLen = 34;
+            } else if(selectedSchedule==='Ironman' && selectedDistance==='113') {
+                raceDate = new Date(2025, 10, 2, 0, 0, 0);
+                offsetDays = 167;
+                scheduleLen = 24;
+            } else if(selectedSchedule==='LAVA 完賽樂園' && selectedDistance==='113') {
+                raceDate = new Date(2026, 2, 14, 0, 0, 0);
+                offsetDays = 167;
+                scheduleLen = 24;
+            } else if(selectedSchedule==='Challenge Taiwan' && selectedDistance==='113') {
+                raceDate = new Date(2026, 3, 25, 0, 0, 0);
+                offsetDays = 167;
+                scheduleLen = 24;
+            }
+            
+            if(!raceDate) return;
+            const startDate = new Date(raceDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+            const now = new Date();
+            if(now < startDate) {
+                const diff = startDate - now;
+                const days = Math.ceil(diff/(1000*60*60*24));
+                friendProfileCountdownInline.innerHTML = `<span style='font-size:40px;font-weight:900;color:#00bcd4;'>${days}</span><span style='font-size:20px;color:#b0bec5;font-weight:500;'> 天</span><div style='font-size:15px;color:#b0bec5;margin-top:2px;'>距離課表開始</div>`;
+                return;
+            }
+            const daysSinceStart = Math.floor((now - startDate)/(1000*60*60*24));
+            let weekIdx = Math.floor(daysSinceStart/7);
+            if(weekIdx >= scheduleLen) weekIdx = scheduleLen-1;
+            friendProfileCountdownInline.innerHTML = `<span style='font-size:22px;color:#00bcd4;font-weight:700;'>課表已開始！</span><div style='font-size:16px;color:#b0bec5;margin-top:6px;'>目前進度：第${weekIdx+1}週</div>`;
+        }
+        if (document.getElementById('closeFriendProfileModal')) {
+            document.getElementById('closeFriendProfileModal').onclick = function() {
+                document.getElementById('friendProfileModal').style.display = 'none';
+            };
+        }
+
+        // 上傳自訂頭像
+        function setupAvatarUpload() {
+            const fileInput = document.getElementById('avatarFileInput');
+            fileInput.addEventListener('change', async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // 檢查檔案大小
+                if (file.size > 5 * 1024 * 1024) {
+                    showMessage('檔案大小不能超過 5MB', 'error');
+                    return;
+                }
+
+                // 檢查檔案類型
+                if (!file.type.startsWith('image/')) {
+                    showMessage('只能上傳圖片檔案', 'error');
+                    return;
+                }
+
+                try {
+                    const formData = new FormData();
+                    formData.append('avatar', file);
+
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/upload-avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    console.log('上傳頭像回應:', data);
+                    if (data.success) {
+                        console.log('上傳成功，更新頭像顯示');
+                        updateProfileAvatar(data.avatarUrl, 'custom');
+                        await loadUserAvatar(); // サーバーから再取得して同期
+                        closeAvatarModal();
+                        showMessage('頭像上傳成功！');
+                    } else {
+                        showMessage('頭像上傳失敗：' + data.error, 'error');
+                    }
+                } catch (error) {
+                    console.error('上傳頭像失敗:', error);
+                    showMessage('頭像上傳失敗，請稍後再試', 'error');
+                }
+            });
+        }
+
+        // 即時檢查稱呼是否可用
+        let checkDisplayNameTimeout;
+        function checkDisplayNameAvailability(displayName) {
+            const userId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            const statusDiv = document.getElementById('displayNameStatus');
+            
+            if (!userId || !token) return;
+            
+            if (!displayName || displayName.trim() === '') {
+                statusDiv.style.display = 'none';
+                return;
+            }
+            
+            // 顯示檢查中狀態
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = '#ffa726';
+            statusDiv.textContent = '檢查中...';
+            
+            fetch(`/api/check-display-name/${encodeURIComponent(displayName.trim())}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(res => res.json()).then(data => {
+                if (data.available) {
+                    statusDiv.style.color = '#4caf50';
+                    statusDiv.textContent = '✓ 稱呼可用';
+                } else {
+                    statusDiv.style.color = '#ff5252';
+                    statusDiv.textContent = `✗ ${data.error}`;
+                }
+            }).catch(error => {
+                console.error('檢查稱呼失敗:', error);
+                statusDiv.style.display = 'none';
+            });
+        }
+        
+        // Debounced 檢查函數
+        function debouncedCheckDisplayName(displayName) {
+            clearTimeout(checkDisplayNameTimeout);
+            checkDisplayNameTimeout = setTimeout(() => {
+                checkDisplayNameAvailability(displayName);
+            }, 500);
+        }
+
+        // 取得元素中的頭像圖片 URL（若沒有則回傳空字串）
+        function getAvatarUrlFromElement(elementId) {
+            const el = document.getElementById(elementId);
+            if (!el) return '';
+            const img = el.querySelector('img');
+            return img && img.getAttribute('src') ? img.getAttribute('src') : '';
+        }
+
+        // 從可能含有 <img ...> 的字串中抽出 src
+        function extractImgSrc(maybeHtml) {
+            if (!maybeHtml) return '';
+            if (maybeHtml.indexOf('<') === -1) return maybeHtml; // 已是 URL
+            const match = /src=["']([^"']+)["']/i.exec(maybeHtml);
+            return match ? match[1] : '';
+        }
+
+        // 初始化配對狀態
+        function initializePairingState() {
+            // 檢查是否已經有配對
+            const currentUserId = localStorage.getItem('currentUser');
+            const pairingData = localStorage.getItem(`pairing_${currentUserId}`);
+            
+            if (pairingData) {
+                let pairing = null;
+                try {
+                    pairing = JSON.parse(pairingData);
+                } catch (err) {
+                    pairing = null;
+                }
+                if (!pairing || typeof pairing !== 'object') {
+                    // localStorage 可能存了字串 "null" 或損毀的資料
+                    showNotPairedState();
+                    return;
+                }
+                // 相容舊資料：若只有 partnerAvatar（可能是整段 HTML），轉成 URL
+                let partnerAvatarUrl = pairing.partnerAvatarUrl || extractImgSrc(pairing.partnerAvatar);
+                if (pairing.partnerId === currentFriendId) {
+                    showPairedState(pairing.partnerName, partnerAvatarUrl);
+                    // 將相容後的 URL 回寫，避免之後再次出錯
+                    if (!pairing.partnerAvatarUrl && partnerAvatarUrl) {
+                        pairing.partnerAvatarUrl = partnerAvatarUrl;
+                        delete pairing.partnerAvatar;
+                        localStorage.setItem(`pairing_${currentUserId}`, JSON.stringify(pairing));
+                    }
+                } else {
+                    showNotPairedState();
+                }
+            } else {
+                showNotPairedState();
+            }
+        }
+
+        // 顯示未配對狀態
+        function showNotPairedState() {
+            document.getElementById('notPairedState').style.display = 'block';
+            document.getElementById('pairedState').style.display = 'none';
+            document.getElementById('pairingProgress').style.display = 'none';
+        }
+
+        // 顯示已配對狀態
+        function showPairedState(partnerName, partnerAvatarUrl) {
+            document.getElementById('notPairedState').style.display = 'none';
+            document.getElementById('pairedState').style.display = 'block';
+            
+            document.getElementById('partnerName').textContent = partnerName;
+            if (partnerAvatarUrl) {
+                document.getElementById('partnerAvatar').innerHTML = `<img src="${partnerAvatarUrl}" alt="${partnerName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            } else {
+                document.getElementById('partnerAvatar').textContent = partnerName.charAt(0).toUpperCase();
+            }
+        }
+
+        // 開始配對
+        function startPairing() {
+            if (pairingTimer) return; // 防止重複觸發
+            
+            const button = document.getElementById('pairingButton');
+            const progress = document.getElementById('pairingProgress');
+            const bar = document.getElementById('pairingBar');
+            const countdown = document.getElementById('pairingCountdown');
+            
+            // 顯示進度條
+            progress.style.display = 'block';
+            
+            // 開始計時
+            pairingProgress = 0;
+            pairingTimer = setInterval(() => {
+                pairingProgress += 10; // 每100ms增加10%
+                bar.style.width = pairingProgress + '%';
+                countdown.textContent = (1.0 - pairingProgress / 100).toFixed(1);
+                
+                if (pairingProgress >= 100) {
+                    completePairing();
+                }
+            }, 100);
+            
+            // 按鈕動畫效果
+            button.style.transform = 'scale(0.95)';
+            button.style.boxShadow = '0 2px 8px rgba(0,188,212,0.5)';
+        }
+
+        // 停止配對
+        function stopPairing() {
+            if (!pairingTimer) return;
+            
+            clearInterval(pairingTimer);
+            pairingTimer = null;
+            
+            const button = document.getElementById('pairingButton');
+            const progress = document.getElementById('pairingProgress');
+            const bar = document.getElementById('pairingBar');
+            
+            // 重置狀態
+            pairingProgress = 0;
+            bar.style.width = '0%';
+            progress.style.display = 'none';
+            
+            // 按鈕動畫效果
+            button.style.transform = 'scale(1)';
+            button.style.boxShadow = '0 4px 12px rgba(0,188,212,0.3)';
+        }
+
+        // 完成配對
+        function completePairing() {
+            if (!pairingTimer) return;
+            
+            clearInterval(pairingTimer);
+            pairingTimer = null;
+            
+            const currentUserId = localStorage.getItem('currentUser');
+            const currentUsername = localStorage.getItem('username');
+            
+            // 檢查是否已經有配對
+            const existingPairing = localStorage.getItem(`pairing_${currentUserId}`);
+            if (existingPairing) {
+                let pairingObj = null;
+                try { pairingObj = JSON.parse(existingPairing); } catch (err) {}
+                if (pairingObj && pairingObj.partnerId !== currentFriendId) {
+                    alert('您已經與其他用戶配對了，請先取消現有配對');
+                    showNotPairedState();
+                    return;
+                }
+                // 如果是同一位好友，允許流程繼續
+            }
+            
+            // 檢查對方是否已經配對
+            const friendPairing = localStorage.getItem(`pairing_${currentFriendId}`);
+            if (friendPairing) {
+                alert('對方已經與其他用戶配對了');
+                showNotPairedState();
+                return;
+            }
+            
+            // 取雙方頭像 URL
+            const friendAvatarUrl = getAvatarUrlFromElement('friendProfileAvatar');
+            const myAvatarUrl = getAvatarUrlFromElement('profileAvatar');
+
+            // 創建配對資料
+            const pairingData = {
+                partnerId: currentFriendId,
+                partnerName: currentFriendUsername,
+                partnerAvatarUrl: friendAvatarUrl,
+                pairedAt: new Date().toISOString()
+            };
+            
+            // 儲存配對資料
+            localStorage.setItem(`pairing_${currentUserId}`, JSON.stringify(pairingData));
+            localStorage.setItem(`pairing_${currentFriendId}`, JSON.stringify({
+                partnerId: currentUserId,
+                partnerName: currentUsername,
+                partnerAvatarUrl: myAvatarUrl,
+                pairedAt: new Date().toISOString()
+            }));
+            
+            // 同步到雲端
+            syncPairingToCloud(pairingData);
+            
+            // 顯示配對成功
+            showPairedState(currentFriendUsername, pairingData.partnerAvatarUrl);
+            
+            // 顯示成功訊息
+            const button = document.getElementById('pairingButton');
+            const originalIcon = button.innerHTML;
+            button.innerHTML = '✓';
+            button.style.background = 'linear-gradient(135deg, #4caf50, #45a049)';
+            
+            setTimeout(() => {
+                button.innerHTML = originalIcon;
+                button.style.background = 'linear-gradient(135deg, #00bcd4, #0097a7)';
+            }, 1000);
+        }
+
+        // 取消配對
+        function unpairSchedule() {
+            if (!confirm('確定要取消配對嗎？')) return;
+            
+            const currentUserId = localStorage.getItem('currentUser');
+            const pairingData = localStorage.getItem(`pairing_${currentUserId}`);
+            
+            if (pairingData) {
+                const pairing = JSON.parse(pairingData);
+                
+                // 清除雙方的配對資料
+                localStorage.removeItem(`pairing_${currentUserId}`);
+                localStorage.removeItem(`pairing_${pairing.partnerId}`);
+                
+                // 同步到雲端
+                syncUnpairingToCloud(pairing.partnerId);
+                
+                // 顯示未配對狀態
+                showNotPairedState();
+                
+                alert('已取消配對');
+            }
+        }
+
+        // 同步配對到雲端
+        function syncPairingToCloud(pairingData) {
+            const currentUserId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            
+            if (!token) return;
+            
+            fetch('/api/sync-pairing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    action: 'pair',
+                    partnerId: pairingData.partnerId,
+                    partnerName: pairingData.partnerName,
+                    partnerAvatarUrl: pairingData.partnerAvatarUrl
+                })
+            }).then(res => {
+                if (!res.ok) {
+                    // 後端尚未部署 /api/sync-pairing：改用通用儲存端點落盤 pairing
+                    return fetch(`/api/user-data/${currentUserId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ data: { pairing: pairingData } })
+                    }).catch(() => {});
+                }
+            }).catch(error => {
+                // 網路錯誤亦嘗試備援端點
+                fetch(`/api/user-data/${currentUserId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ data: { pairing: pairingData } })
+                }).catch(() => {});
+            });
+        }
+
+        // 同步取消配對到雲端
+        function syncUnpairingToCloud(partnerId) {
+            const currentUserId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            
+            if (!token) return;
+            
+            fetch('/api/sync-pairing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    action: 'unpair',
+                    partnerId: partnerId
+                })
+            }).then(res => {
+                if (!res.ok) {
+                    // 備援：直接把 pairing 設為 null 存回雲端
+                    return fetch(`/api/user-data/${currentUserId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ data: { pairing: null } })
+                    }).catch(() => {});
+                }
+            }).catch(error => {
+                fetch(`/api/user-data/${currentUserId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ data: { pairing: null } })
+                }).catch(() => {});
+            });
+        }
+
+        // 載入配對狀態
+        function loadPairingStatus() {
+            const currentUserId = localStorage.getItem('currentUser');
+            const pairingData = localStorage.getItem(`pairing_${currentUserId}`);
+            
+            if (pairingData) {
+                let pairing = null;
+                try {
+                    pairing = JSON.parse(pairingData);
+                } catch (err) {
+                    pairing = null;
+                }
+                if (pairing && typeof pairing === 'object' && pairing.partnerName) {
+                    // 可以在主頁面顯示配對狀態
+                    console.log('目前配對夥伴:', pairing.partnerName);
+                }
+            }
+        }
+
+        // 頁面載入時檢查配對狀態
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPairingStatus();
+        });
+    </script>
+    <script src="../nav.js"></script>
+</body>
+</html>

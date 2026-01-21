@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統計 - 三項都會累</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            position: relative;
+        }
+
+        /* 背景動畫效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(33, 150, 243, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(156, 39, 176, 0.05) 0%, transparent 50%);
+            animation: backgroundFloat 25s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg) scale(1); 
+                opacity: 0.8;
+            }
+            25% { 
+                transform: translateY(-15px) rotate(0.5deg) scale(1.02); 
+                opacity: 1;
+            }
+            50% { 
+                transform: translateY(10px) rotate(-0.5deg) scale(0.98); 
+                opacity: 0.9;
+            }
+            75% { 
+                transform: translateY(-5px) rotate(0.3deg) scale(1.01); 
+                opacity: 0.95;
+            }
+        }
+        body {
+            width: 100vw;
+            min-height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 420px;
+            height: 100dvh;
+            min-height: 0;
+            background: rgba(34, 40, 49, 0.98);
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+            border: 1.5px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(4px);
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top);
+            position: relative;
+        }
+        .header {
+            width: 100%;
+            background: linear-gradient(90deg, #12214e 0%, #078282 100%);
+            color: white;
+            text-align: center;
+            padding: 20px 0 16px 0;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .content {
+            flex: 1;
+            width: 100%;
+            padding: 20px;
+            padding-bottom: 80px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        /* 自定義滾動條樣式 */
+        .content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+        .content::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 4px;
+        }
+        .content::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+        /* Firefox 滾動條樣式 */
+        .content {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: slideInUp 0.8s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .card h2 {
+            margin: 0 0 12px 0;
+            color: #00bcd4;
+            font-size: 18px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .stat-item {
+            background: rgba(0,188,212,0.1);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00bcd4;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #b0bec5;
+        }
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: space-around;
+            gap: 8px;
+            position: relative;
+        }
+        .chart-col {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+        }
+        .chart-bar {
+            width: 80%;
+            min-height: 4px;
+            background: linear-gradient(90deg, #12214e 0%, #078282 100%);
+            border-radius: 8px 8px 0 0;
+            transition: height 0.3s ease;
+            margin-bottom: 6px;
+        }
+        .chart-label {
+            width: 100%;
+            text-align: center;
+            color: #b0bec5;
+            font-size: 12px;
+            margin-top: 2px;
+            margin-bottom: 0;
+            position: static;
+        }
+        .chart-percent {
+            width: 100%;
+            text-align: center;
+            color: #b0bec5;
+            font-size: 12px;
+            margin-top: 2px;
+            margin-bottom: 0;
+            position: static;
+        }
+        @media (max-width: 500px) {
+            .container {
+                max-width: 100vw;
+                height: 100dvh;
+                min-height: 0;
+                border-radius: 0;
+                padding-bottom: 60px;
+            }
+        }
+        .weekly-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, auto);
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .weekly-grid .stat-item {
+            background: rgba(0,188,212,0.1);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        .weekly-grid .weekly-total {
+            grid-column: 1 / span 3;
+        }
+        .weekly-achievement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .achievement-week-card {
+            background: rgba(0,188,212,0.10);
+            border-radius: 12px;
+            padding: 14px 14px 10px 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .achievement-week-header {
+            font-size: 14px;
+            color: #00bcd4;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .achievement-week-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .achievement-bar-bg {
+            background: #222;
+            width: 60%;
+            height: 14px;
+            border-radius: 7px;
+            overflow: hidden;
+            position: relative;
+        }
+        .achievement-bar {
+            background: linear-gradient(90deg, #00bcd4 0%, #2196f3 100%);
+            height: 100%;
+            border-radius: 7px;
+            transition: width 0.3s;
+        }
+        .achievement-rate {
+            color: #00bcd4;
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 38px;
+        }
+        .achievement-detail {
+            font-size: 12px;
+            color: #b0bec5;
+            margin-left: 2px;
+        }
+        
+        /* 排行榜樣式 */
+        .leaderboard-container {
+            max-height: 320px; /* 約5人高度，可依實際需求調整 */
+            overflow-y: auto;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        
+        .leaderboard-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .leaderboard-item.current-user {
+            background: rgba(0,188,212,0.15);
+            border-color: rgba(0,188,212,0.3);
+        }
+        
+        .rank-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .rank-1 {
+            background: linear-gradient(135deg, #8400ff 0%, #ee009f  100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(191, 91, 221, 0.774);
+        }
+        
+        .rank-2 {
+            background: linear-gradient(135deg, #a073f3 0%, #FF69B4 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(230,230,250,0.4);
+        }
+        
+        .rank-3 {
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(255,105,180,0.4);
+        }
+        
+        .rank-other {
+            background: rgba(0,188,212,0.2);
+            color: #00bcd4;
+        }
+        
+        .user-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .username {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+        
+        .current-user .username {
+            color: #00bcd4;
+        }
+        
+        .distance-info {
+            font-size: 12px;
+            color: #b0bec5;
+        }
+        
+        .distance-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00bcd4;
+            margin-left: auto;
+            padding-left: 12px;
+        }
+        
+        .current-user .distance-value {
+            color: #fff;
+        }
+        
+        /* 凸台樣式 */
+        .podium-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 2em;
+            margin-bottom: 1em;
+            height: 120px;
+        }
+        
+        .podium-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .podium-base {
+            width: 60px;
+            background: linear-gradient(135deg, #a073f3 0%, #FF69B4 50%);
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,188,212,0.3);
+        }
+        
+        .podium-1 {
+            height: 80px;
+            background: linear-gradient(135deg, #8400ff 0%, #ee009f 100%);
+            box-shadow: 0 4px 12px rgba(191, 91, 221, 0.774);
+        }
+        
+        .podium-2 {
+            height: 60px;
+            background: linear-gradient(135deg, #a073f3 0%, #FF69B4 100%);
+            box-shadow: 0 4px 12px rgba(230,230,250,0.4);
+        }
+        
+        .podium-3 {
+            height: 40px;
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            box-shadow: 0 4px 12px rgba(255,105,180,0.4);
+        }
+        
+        .podium-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .podium-username {
+            font-size: 12px;
+            color: #b0bec5;
+            text-align: center;
+            margin-top: 4px;
+        }
+        
+        .no-friends-message {
+            text-align: center;
+            color: #b0bec5;
+            font-style: italic;
+            padding: 20px;
+        }
+        
+        /* 下拉功能樣式 */
+        .expandable-section {
+            margin-top: 16px;
+        }
+        
+        .expand-button {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0,188,212,0.1);
+            border: 1px solid rgba(0,188,212,0.3);
+            border-radius: 12px;
+            color: #00bcd4;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .expand-button:hover {
+            background: rgba(0,188,212,0.2);
+            transform: translateY(-1px);
+        }
+        
+        .expand-button .arrow {
+            transition: transform 0.3s;
+        }
+        
+        .expand-button.expanded .arrow {
+            transform: rotate(180deg);
+        }
+        
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .expandable-content.expanded {
+            max-height: 500px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00bcd4 0%, #2196f3 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Stats</div>
+        <div class="content">
+            <div class="card" id="leaderboard-card">
+                <h2>本月跑步排行榜</h2>
+                <div id="leaderboardContent">
+                    <div class="no-friends-message">載入中...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>本週統計</h2>
+                <div class="stats-grid weekly-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="weeklySwim">0</div>
+                        <div class="stat-label">游泳 (km)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="weeklyBike">0</div>
+                        <div class="stat-label">騎車 (km)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="weeklyRun">0</div>
+                        <div class="stat-label">跑步 (km)</div>
+                    </div>
+                    <div class="stat-item weekly-total">
+                        <div class="stat-value" id="weeklyTotal">0</div>
+                        <div class="stat-label">總計 (km)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>本週進度</h2>
+                <div class="chart-container">
+                    <div class="chart-col">
+                        <div class="chart-bar" id="swimBar" style="height: 0%;"></div>
+                        <div class="chart-label">游泳</div>
+                        <div class="chart-percent" id="swimPercent">0%</div>
+                    </div>
+                    <div class="chart-col">
+                        <div class="chart-bar" id="bikeBar" style="height: 0%;"></div>
+                        <div class="chart-label">騎車</div>
+                        <div class="chart-percent" id="bikePercent">0%</div>
+                    </div>
+                    <div class="chart-col">
+                        <div class="chart-bar" id="runBar" style="height: 0%;"></div>
+                        <div class="chart-label">跑步</div>
+                        <div class="chart-percent" id="runPercent">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" id="weekly-achievement-card">
+                <h2>每週訓練達成率</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <button id="prevMonthBtn" style="padding: 4px 10px; border-radius: 6px; border: none; background: #00bcd4; color: #fff; cursor: pointer;">上個月</button>
+                    <span id="achievementMonthLabel" style="font-weight: bold; color: #00bcd4;"></span>
+                    <button id="nextMonthBtn" style="padding: 4px 10px; border-radius: 6px; border: none; background: #00bcd4; color: #fff; cursor: pointer;">下個月</button>
+                </div>
+                <div id="weeklyAchievementList" class="weekly-achievement-list"></div>
+            </div>
+            <!-- 共同課表（配對後顯示） -->
+            <div class="card" id="sharedScheduleCard">
+                <h2>共同課表</h2>
+                <div id="sharedScheduleContent"></div>
+            </div>
+        </div>
+        <!-- 導航列將由 nav.js 自動生成 -->
+    </div>
+
+    <script>
+        // 下拉功能切換 - 全局函數
+        function toggleExpandable() {
+            const button = document.querySelector('.expand-button');
+            const content = document.getElementById('expandableContent');
+            
+            if (button && content) {
+                button.classList.toggle('expanded');
+                content.classList.toggle('expanded');
+            }
+        }
+
+        let userId = localStorage.getItem('currentUser');
+        let token = localStorage.getItem('token');
+        let events = {}; // 全局events變數
+
+        // 簡化同步控制
+        let syncInProgress = false;
+
+        async function fetchCloudData(userId, token) {
+            // 避免重複同步
+            if (syncInProgress) return;
+            syncInProgress = true;
+            
+            try {
+                const res = await fetch(`/api/user-data/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (res.ok) {
+                    const { data } = await res.json();
+                Object.keys(data).forEach(key => {
+                    // chatHistory 特別處理：雲端有內容才覆蓋本地，否則保留本地
+                    if (key === 'chatHistory') {
+                        if (Array.isArray(data[key]) && data[key].length > 0) {
+                            localStorage.setItem(`${key}_${userId}`, JSON.stringify(data[key]));
+                        } // 雲端為空則不覆蓋
+                    // pairing 智慧合併：以時間戳為準，避免衝突
+                    } else if (key === 'pairing') {
+                        const localPairing = localStorage.getItem(`pairing_${userId}`);
+                        let localObj = null;
+                        try {
+                            localObj = localPairing ? JSON.parse(localPairing) : null;
+                        } catch(_) { localObj = null; }
+                        
+                        const localTime = new Date(localObj?.pairedAt || 0);
+                        const cloudTime = new Date(data[key]?.pairedAt || 0);
+                        
+                        // 簡化：以最新時間戳為準
+                        if (localTime > cloudTime) {
+                            console.log('保留本地配對資料（更新）');
+                        } else if (cloudTime > localTime) {
+                            console.log('使用雲端配對資料（更新）');
+                            localStorage.setItem(`${key}_${userId}`, JSON.stringify(data[key]));
+                        } else if (localObj && !data[key]) {
+                            console.log('保留本地配對資料（雲端為空）');
+                        } else if (!localObj && data[key]) {
+                            console.log('使用雲端配對資料（本地為空）');
+                            localStorage.setItem(`${key}_${userId}`, JSON.stringify(data[key]));
+                        }
+                    } else {
+                        localStorage.setItem(`${key}_${userId}`, JSON.stringify(data[key]));
+                    }
+                });
+                // 可觸發 UI 更新
+                }
+            } catch (error) {
+                console.error('同步失敗:', error);
+            } finally {
+                syncInProgress = false;
+            }
+        }
+
+        async function syncToCloud() {
+            const userId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            if (!userId || !token) return;
+            try {
+                // 先從伺服器獲取現有數據
+                const response = await fetch(`/api/user-data/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                let existingData = {};
+                if (response.ok) {
+                    const result = await response.json();
+                    existingData = result.data || {};
+                }
+                // 合併 calendarEvents
+                const localEvents = JSON.parse(localStorage.getItem(`calendarEvents_${userId}`) || '{}');
+                const cloudEvents = existingData.calendarEvents || {};
+                const mergedEvents = { ...cloudEvents, ...localEvents };
+                // 合併 trainingGoals
+                const localGoals = JSON.parse(localStorage.getItem(`trainingGoals_${userId}`) || '[]');
+                const cloudGoals = existingData.trainingGoals || [];
+                const goalKey = g => `${g.name}__${g.date}`;
+                const mergedGoalsMap = {};
+                cloudGoals.forEach(g => mergedGoalsMap[goalKey(g)] = g);
+                localGoals.forEach(g => mergedGoalsMap[goalKey(g)] = g);
+                const mergedGoals = Object.values(mergedGoalsMap);
+                // 合併 schedules
+                const localSchedules = JSON.parse(localStorage.getItem(`schedules_${userId}`) || '[]');
+                const cloudSchedules = existingData.schedules || [];
+                const mergedSchedules = localSchedules.length ? localSchedules : cloudSchedules;
+                // 其它欄位直接用本地
+                const updatedData = {
+                    ...existingData,
+                    calendarEvents: mergedEvents,
+                    trainingGoals: mergedGoals,
+                    schedules: mergedSchedules,
+                    todaySchedule: JSON.parse(localStorage.getItem(`todaySchedule_${userId}`) || '""'),
+                    chatHistory: JSON.parse(localStorage.getItem(`chatHistory_${userId}`) || '[]'),
+                    selectedScheduleType: JSON.parse(localStorage.getItem(`selectedScheduleType_${userId}`) || 'null'),
+                    selectedScheduleDistance: JSON.parse(localStorage.getItem(`selectedScheduleDistance_${userId}`) || 'null'),
+                    selectedScheduleLevel: JSON.parse(localStorage.getItem(`selectedScheduleLevel_${userId}`) || 'null'),
+                    events: JSON.parse(localStorage.getItem(`events_${userId}`) || 'null'),
+                    profile: JSON.parse(localStorage.getItem(`profile_${userId}`) || '{}'),
+                    pairing: JSON.parse(localStorage.getItem(`pairing_${userId}`) || 'null')
+                };
+                await fetch(`/api/user-data/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ data: updatedData })
+                });
+            } catch (error) {
+                console.error('同步到雲端失敗:', error);
+            }
+        }
+
+        function setupAutoSync() {
+            // 移除定期同步，改為事件驅動同步
+            // setInterval(syncToCloud, 60000);
+        }
+
+        function logout() {
+            const userId = localStorage.getItem('currentUser');
+            const keys = [
+                'trainingGoals', 'calendarEvents', 'schedules', 'todaySchedule',
+                'chatHistory', 'selectedScheduleType', 'selectedScheduleDistance',
+                'selectedScheduleLevel', 'events'
+            ];
+            keys.forEach(key => localStorage.removeItem(`${key}_${userId}`));
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('token');
+        }
+
+        // 登入後自動合併未登入的 calendarEvents 到帳號專屬 calendarEvents_{currentUser}
+        window.addEventListener('load', () => {
+            const userId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            if (userId && token) {
+                // 合併未登入的 calendarEvents
+                try {
+                    const anonEvents = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+                    const userEvents = JSON.parse(localStorage.getItem(`calendarEvents_${userId}`) || '{}');
+                    // 合併兩份資料（同一天的活動合併陣列）
+                    Object.keys(anonEvents).forEach(dateKey => {
+                        if (!userEvents[dateKey]) {
+                            userEvents[dateKey] = anonEvents[dateKey];
+                        } else {
+                            // 合併陣列（避免重複）
+                            const existStr = JSON.stringify(userEvents[dateKey]);
+                            anonEvents[dateKey].forEach(ev => {
+                                if (!existStr.includes(JSON.stringify(ev))) {
+                                    userEvents[dateKey].push(ev);
+                                }
+                            });
+                        }
+                    });
+                    localStorage.setItem(`calendarEvents_${userId}`, JSON.stringify(userEvents));
+                    // 清空 anonEvents，避免重複合併
+                    localStorage.removeItem('calendarEvents');
+                } catch(e) { console.warn('合併本地日曆資料失敗', e); }
+                fetchCloudData(userId, token);
+                setupAutoSync();
+            }
+        });
+
+        // 跨分頁/裝置：監聽 pairing 狀態變更並更新畫面
+        window.addEventListener('storage', (e) => {
+            const uid = localStorage.getItem('currentUser');
+            if (!uid) return;
+            if (e && typeof e.key === 'string' && e.key === `pairing_${uid}`) {
+                try { renderSharedScheduleCard(); } catch(_) {}
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 通用帳號專屬 localStorage 存取
+            function getUserKey(key) {
+                const user = localStorage.getItem('currentUser');
+                return user ? `${key}_${user}` : key;
+            }
+            function setUserData(key, value) {
+                localStorage.setItem(getUserKey(key), JSON.stringify(value));
+            }
+            function getUserData(key, fallback = null) {
+                const val = localStorage.getItem(getUserKey(key));
+                if (!val) return fallback;
+                try { return JSON.parse(val); } catch { return fallback; }
+            }
+            // 取得帳號專屬課表設定
+            function getSelectedSchedule(type) {
+                return getUserData(type, '');
+            }
+            function saveSelectedSchedule(type, distance, level) {
+                setUserData('selectedScheduleType', type);
+                setUserData('selectedScheduleDistance', distance);
+                setUserData('selectedScheduleLevel', level || '');
+                if ((type === 'Ironman' && distance === '113') || (type === 'LAVA 完賽樂園' && distance === '113')) {
+                    setUserData('schedules', schedule_113_eagle);
+                } else if (type === 'Challenge Taiwan' && distance === '226') {
+                    if (typeof schedule_226_duck !== 'undefined') {
+                        setUserData('schedules', schedule_226_duck);
+                    }
+                } else {
+                    setUserData('schedules', []);
+                }
+            }
+            function getUserSchedules() {
+                return getUserData('schedules', []);
+            }
+            function getGoals() {
+                return getUserData('trainingGoals', []);
+            }
+            function saveGoals(goals) {
+                setUserData('trainingGoals', goals);
+                if (localStorage.getItem('token')) syncToCloud();
+            }
+            function getStats() {
+                return getUserData('stats', {});
+            }
+            function setStats(val) {
+                setUserData('stats', val);
+            }
+
+            // ===== 共同課表：工具 =====
+            function getPairing() {
+                const uid = getCurrentUser();
+                if (!uid) return null;
+                try {
+                    const raw = localStorage.getItem(`pairing_${uid}`);
+                    if (!raw) return null;
+                    const obj = JSON.parse(raw);
+                    // 嚴格驗證必要欄位，避免殘留或錯誤資料造成誤判
+                    if (!obj || typeof obj !== 'object') return null;
+                    if (!obj.partnerId || obj.partnerId === uid) return null;
+                    if (!obj.partnerName || String(obj.partnerName).trim() === '') return null;
+                    if (!obj.partnerAvatarUrl && obj.partnerAvatar) {
+                        const m = /src=["']([^"']+)["']/.exec(obj.partnerAvatar);
+                        obj.partnerAvatarUrl = m ? m[1] : '';
+                    }
+                    return obj;
+                } catch(e){ return null; }
+            }
+            function parseNumeric(val){
+                if (val == null) return 0;
+                const m = String(val).match(/([0-9]+(?:\.[0-9]+)?)/);
+                return m ? parseFloat(m[1]) : 0;
+            }
+            
+            // 進階數字解析：支援複合訓練（如 "騎30K + 跑6K"）
+            function parseNumericAdvanced(val){
+                if (val == null || val === '') return 0;
+                if (val === '休息日') return 0;
+                
+                const str = String(val);
+                let total = 0;
+                
+                // 匹配所有數字（包含小數點）
+                const matches = str.match(/([0-9]+(?:\.[0-9]+)?)/g);
+                if (matches) {
+                    matches.forEach(match => {
+                        total += parseFloat(match);
+                    });
+                }
+                
+                return total;
+            }
+            
+            // 計算當前是第幾週（從課表開始日期算起，考慮時區）
+            function getCurrentWeekIndex(){
+                // 取得課表開始日期
+                const { startDate } = getScheduleStartDateAndDaysLeft();
+                if (!startDate) return 0; // 如果沒有開始日期，預設第0週
+                
+                const now = new Date();
+                // 考慮時區差異，使用本地時間
+                const startOfDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                const nowOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                const diffTime = nowOfDay - startOfDay;
+                const diffWeeks = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
+                
+                // 確保不會是負數，且不超過課表週數
+                const maxWeeks = 24; // 假設最多24週課表
+                return Math.max(0, Math.min(diffWeeks, maxWeeks));
+            }
+            
+            // ====== 統一倒數天數邏輯 ======
+            function getScheduleStartDateAndDaysLeft() {
+                // 取得賽事日與 offsetDays
+                let raceDate = null, offsetDays = 236;
+                const type = getSelectedSchedule('selectedScheduleType');
+                const distance = getSelectedSchedule('selectedScheduleDistance');
+                if (type === 'Challenge Taiwan' && distance === '226') {
+                    raceDate = new Date(2026, 3, 25);
+                    offsetDays = 236;
+                } else if ((type === 'Ironman' && distance === '113') || (type === 'LAVA 完賽樂園' && distance === '113') || (type === 'Challenge Taiwan' && distance === '113')) {
+                    if(type === 'Ironman') {
+                        raceDate = new Date(2025, 10, 2);
+                        offsetDays = 167;
+                    } else if(type === 'LAVA 完賽樂園') {
+                        raceDate = new Date(2026, 2, 14);
+                        offsetDays = 167;
+                    } else if(type === 'Challenge Taiwan') {
+                        raceDate = new Date(2026, 3, 25);
+                        offsetDays = 167;
+                    }
+                }
+                if (!raceDate) return {startDate: null, daysLeft: null};
+                const startDate = new Date(raceDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+                const now = new Date();
+                const daysLeft = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+                return {startDate, daysLeft};
+            }
+            function getUserTodayDistanceFromLocal(userId){
+                const stats = JSON.parse(localStorage.getItem(`stats_${userId}`) || 'null')
+                    || getStats();
+                if (stats && stats.weeklyStats && typeof stats.weeklyStats.total === 'number'){
+                    return stats.weeklyStats.total / 7;
+                }
+                return 0;
+            }
+            function getUserSelectedTarget(userId){
+                const type = JSON.parse(localStorage.getItem(`selectedScheduleType_${userId}`) || 'null');
+                const dist = JSON.parse(localStorage.getItem(`selectedScheduleDistance_${userId}`) || 'null');
+                return parseNumeric(dist) || parseNumeric(type);
+            }
+            // 取得今天日期 key 與星期名稱（與 schedules 使用的鍵一致）
+            function getTodayDateKey(){
+                const today = new Date();
+                const y = today.getFullYear();
+                const m = String(today.getMonth() + 1).padStart(2, '0');
+                const d = String(today.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            function getTodayWeekdayName(){
+                const weekDays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                return weekDays[new Date().getDay()];
+            }
+            // 從 calendarEvents 取得「真正的今日量」
+            function getUserTodayActualFromLocal(userId) {
+                const key = getTodayDateKey();
+                let events = {};
+                try {
+                    events = JSON.parse(localStorage.getItem(`calendarEvents_${userId}`) || 'null')
+                          || JSON.parse(localStorage.getItem('calendarEvents') || 'null')
+                          || {};
+                } catch(_) { events = {}; }
+                const list = events[key] || [];
+                let ride = 0, run = 0, swim = 0;
+                for (const ev of list) {
+                    if (typeof ev === 'object' && ev != null) {
+                        let type = ev.type;
+                        if (type === 'Run' || type === '跑步') run += Number(ev.distance) || 0;
+                        if (type === 'Ride' || type === '騎車') ride += Number(ev.distance) || 0;
+                        if (type === 'Swim' || type === '游泳') swim += Number(ev.distance) || 0;
+                    } else if (typeof ev === 'string') {
+                        // 盡力判斷：如 '跑5km' 這一類
+                        if (ev.match(/跑/)) {
+                            const m = ev.match(/([\d.]+)\s*[kK]/);
+                            if (m) run += Number(m[1]) || 0;
+                        } else if (ev.match(/騎/)) {
+                            const m = ev.match(/([\d.]+)\s*[kK]/);
+                            if (m) ride += Number(m[1]) || 0;
+                        } else if (ev.match(/游/)) {
+                            const m = ev.match(/([\d.]+)\s*[kK]/);
+                            if (m) swim += Number(m[1]) || 0;
+                        }
+                    }
+                }
+                return { ride, run, swim };
+            }
+            // 進階解析課表條目，例如 "騎30K (或訓練台60分) + 跑6K"
+            function parseScheduleEntryAdvanced(val) {
+                if (!val || val === '休息日') return { ride: 0, run: 0, swim: 0 };
+                const str = String(val);
+                let ride = 0, runValue = 0, swimValue = 0;
+
+                // 騎xxK (或訓練台xx分) 規則
+                const mainRide = str.match(/騎([0-9]+(?:\.[0-9]+)?)K/);
+                const run = str.match(/跑([0-9]+(?:\.[0-9]+)?)K/);
+                const swim = str.match(/游([0-9]+(?:\.[0-9]+)?)K/);
+                
+                // 複合訓練：例如 騎30K (或訓練台60分) + 跑6K
+                if (mainRide) ride += parseFloat(mainRide[1]);
+                if (run) runValue = parseFloat(run[1]);
+                if (swim) swimValue = parseFloat(swim[1]);
+                
+                // 訓練台換算表（可調整）
+                const trainerConversion = {
+                    30: 15,   // 30分 = 15K
+                    45: 22,   // 45分 = 22K
+                    60: 30,   // 60分 = 30K
+                    90: 45,   // 90分 = 45K
+                    120: 60   // 120分 = 60K
+                };
+                
+                // 處理訓練台分鐘數
+                if (!mainRide) {
+                    const trainerMatch = str.match(/訓練台([0-9]+)分/);
+                    if (trainerMatch) {
+                        const minutes = parseInt(trainerMatch[1]);
+                        // 優先使用換算表，否則按比例計算（每分鐘0.5K）
+                        ride = trainerConversion[minutes] || (minutes * 0.5);
+                    }
+                }
+                
+                // 處理其他運動類型（間歇、拉伸等應為0）
+                const restKeywords = ['間歇', '拉伸', '恢復', '休息', '放鬆'];
+                const hasRest = restKeywords.some(keyword => str.includes(keyword));
+                if (hasRest && ride + runValue + swimValue === 0) {
+                    return { ride: 0, run: 0, swim: 0 };
+                }
+
+                return { 
+                    ride: Math.max(0, ride || 0), 
+                    run: Math.max(0, runValue || 0), 
+                    swim: Math.max(0, swimValue || 0) 
+                };
+            }
+
+            // 修改 getUserTodayTargetFromLocal，分別回傳分項
+            function getUserTodayTargetFromLocal(userId) {
+                let schedules = [];
+                try {
+                    schedules = JSON.parse(localStorage.getItem(`schedules_${userId}`) || 'null')
+                              || JSON.parse(localStorage.getItem('schedules') || 'null')
+                              || [];
+                } catch(_) { schedules = []; }
+                const weekday = getTodayWeekdayName();
+                const currentWeek = getCurrentWeekIndex();
+                const todayVal = (schedules && schedules.length > currentWeek && schedules[currentWeek] && schedules[currentWeek][weekday])
+                    ? schedules[currentWeek][weekday] : '';
+
+                // 使用進階解析
+                const targetObj = parseScheduleEntryAdvanced(todayVal);
+                // 如果全為0則回退用戶通用項目（例如原本 parseNumeric 的距離，但這裡可再自訂）
+                if ((targetObj.ride + targetObj.run + targetObj.swim) > 0) return targetObj;
+                // 回退：使用者個人設定（目前假設都回傳0，未來可加 defaultTargetObj）
+                return { ride: 0, run: 0, swim: 0 };
+            }
+            function setMiniAvatar(elementId, url, fallbackText){
+                const el = document.getElementById(elementId);
+                if (!el) return;
+                if (url) el.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;">`;
+                else el.textContent = (fallbackText||'').slice(0,1).toUpperCase() || 'A';
+            }
+
+            // ===== 共同課表：立即同步配對到雲端（簡化版） =====
+            function syncPairingToCloud(pairingData) {
+                const currentUserId = localStorage.getItem('currentUser');
+                const token = localStorage.getItem('token');
+                
+                if (!token || !currentUserId) return;
+                
+                // 簡化：直接同步，無防抖
+                fetch('/api/sync-pairing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        action: pairingData.action || 'pair',
+                        partnerId: pairingData.partnerId,
+                        partnerName: pairingData.partnerName,
+                        partnerAvatarUrl: pairingData.partnerAvatarUrl
+                    })
+                }).then(res => {
+                    if (!res.ok) {
+                        // 備援：直接寫入 user_data
+                        return fetch(`/api/user-data/${currentUserId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                data: { 
+                                    pairing: pairingData.action === 'unpair' ? null : pairingData 
+                                } 
+                            })
+                        }).catch(() => {});
+                    }
+                    console.log('配對同步成功');
+                }).catch(error => {
+                    console.error('配對同步失敗:', error);
+                    // 網路錯誤亦嘗試備援端點
+                    fetch(`/api/user-data/${currentUserId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            data: { 
+                                pairing: pairingData.action === 'unpair' ? null : pairingData 
+                            } 
+                        })
+                    }).catch(() => {});
+                });
+            }
+
+            // ===== 共同課表：取消配對 =====
+            function unpairSharedSchedule(partnerId){
+                const myId = getCurrentUser();
+                if (!myId) return;
+                try {
+                    localStorage.removeItem(`pairing_${myId}`);
+                    if (partnerId) {
+                        // 一併清除本機為夥伴寫入的 pairing，避免重新配對被舊值誤判阻擋
+                        localStorage.removeItem(`pairing_${partnerId}`);
+                        // 延遲清除 profile，讓排行榜有時間重新載入
+                        setTimeout(() => {
+                            localStorage.removeItem(`profile_${partnerId}`);
+                        }, 2000);
+                    }
+                } catch(e) {}
+                const token = localStorage.getItem('token');
+                if (token && partnerId) {
+                    fetch(`/api/unpair/${partnerId}`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }).then(res => {
+                        if (!res.ok) {
+                            // 舊路由不存在時，改用新同步端點進行解除配對
+                            return fetch('/api/sync-pairing', {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ action: 'unpair', partnerId })
+                            }).then(r => {
+                                if (!r || !r.ok) {
+                                    // 最終備援：直接寫回雲端資料 pairing=null
+                                    const myIdSafe = getCurrentUser();
+                                    if (myIdSafe) {
+                                        return fetch(`/api/user-data/${myIdSafe}`, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Authorization': `Bearer ${token}`,
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({ data: { pairing: null } })
+                    }).catch(() => {});
+                                    }
+                                }
+                            }).catch(() => {
+                                const myIdSafe = getCurrentUser();
+                                if (myIdSafe) {
+                                    fetch(`/api/user-data/${myIdSafe}`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ data: { pairing: null } })
+                                    }).catch(() => {});
+                                }
+                            });
+                        }
+                    }).catch(() => {
+                        // 請求失敗同樣改用新端點
+                        fetch('/api/sync-pairing', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ action: 'unpair', partnerId })
+                        }).then(r => {
+                            if (!r || !r.ok) {
+                                const myIdSafe = getCurrentUser();
+                                if (myIdSafe) {
+                                    return fetch(`/api/user-data/${myIdSafe}`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ data: { pairing: null } })
+                                    }).catch(() => {});
+                                }
+                            }
+                        }).catch(() => {
+                            const myIdSafe = getCurrentUser();
+                            if (myIdSafe) {
+                                fetch(`/api/user-data/${myIdSafe}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ data: { pairing: null } })
+                                }).catch(() => {});
+                            }
+                        });
+                    });
+                }
+                // 立即更新UI
+                renderSharedScheduleCard();
+                
+                // 立即同步解除配對到雲端
+                if (localStorage.getItem('token')) {
+                    try { 
+                        syncPairingToCloud({ action: 'unpair', partnerId }); 
+                    } catch(_) {}
+                }
+                
+                // 簡化：1秒後重新載入排行榜
+                setTimeout(() => {
+                    fetchLeaderboardFromDatabase();
+                }, 1000);
+            }
+
+            // ===== 共同課表：渲染 =====
+async function renderSharedScheduleCard(){
+    const card = document.getElementById('sharedScheduleCard');
+    const content = document.getElementById('sharedScheduleContent');
+    if (!card || !content) return;
+    
+    const myId = getCurrentUser();
+    
+    // 步驟 1: 先渲染快取資料
+    let pairing = getCachedPairing(myId);
+    if (pairing) {
+        console.log('使用快取配對資料:', pairing);
+        await renderWithPairing(pairing, content, myId);
+    } else {
+        // 沒有快取，顯示載入中
+        content.innerHTML = `<div style="padding:18px 12px;min-height:50px;text-align:center;color:#b0bec5;font-size:15px;">載入配對資料中...</div>`;
+    }
+    
+    // 步驟 2: 背景 fetch 最新資料
+    try {
+        const freshPairing = await fetchPairing(myId);
+        if (freshPairing && (!pairing || freshPairing.partnerId !== pairing.partnerId)) {
+            console.log('配對資料已更新:', freshPairing);
+            await renderWithPairing(freshPairing, content, myId);
+        }
+    } catch (error) {
+        console.error('背景更新配對失敗:', error);
+        // 如果沒有快取資料，顯示錯誤
+        if (!pairing) {
+            content.innerHTML = `<div style="padding:18px 12px;min-height:50px;text-align:center;color:#ff6b6b;font-size:15px;">無法載入配對資料，請檢查網路連線</div>`;
+        }
+    }
+}
+
+// 分離渲染邏輯
+async function renderWithPairing(pairing, content, myId) {
+    if (!pairing) {
+        content.innerHTML = `<div style="padding:18px 12px;min-height:50px;text-align:center;color:#b0bec5;font-size:15px;">尚未配對共同課表</div>
+        <div style="text-align:center;margin-top:16px;"><button id="startPairingBtn" style="background:linear-gradient(90deg, #12214e 0%, #078282 100%);color:#fff;border:none;border-radius:8px;font-size:16px;padding:10px 24px;cursor:pointer;box-shadow:0 2px 8px rgba(0,188,212,0.18);font-weight:600;">開始配對</button></div>`;
+        const btn = document.getElementById('startPairingBtn');
+        if (btn) { btn.onclick = () => { window.location.href = 'membership/membership.html#tab-friends'; } }
+        return;
+    }
+                // 原既有 partnerProfile 讀取邏輯可以保留
+                let partnerProfile = null;
+                try {
+                    // 若有快取 profile 的機制可保留；否則略過
+                } catch(_) {}
+                // 後續流程照舊（myTarget/partnerTarget/combinedTarget 等）
+                // ...保留舊進度條、夥伴卡內容渲染程式碼...
+                // 以下內容可複用舊渲染，每次 pairing 存在時填入
+                // 先用本地快取資料，避免不必要的請求
+                try {
+                    const cached = localStorage.getItem(`profile_${pairing.partnerId}`);
+                    if (cached) partnerProfile = JSON.parse(cached);
+                } catch(e) {}
+                // 若沒有快取且為正式ID，才嘗試呼叫後端（加上授權標頭）
+                const _token = localStorage.getItem('token');
+                const isTestId = /^T\d+$/i.test(String(pairing.partnerId || ''));
+                if (!partnerProfile && _token && !isTestId) {
+                    try{
+                        const res = await fetch(`/api/public-profile/${pairing.partnerId}`, {
+                            headers: { 'Authorization': `Bearer ${_token}` }
+                        });
+                        if (res.ok) partnerProfile = await res.json();
+                    }catch(e){}
+                }
+                // 若仍無法取得對方資料，視為未配對，避免錯誤顯示
+                if (!partnerProfile) {
+                    content.innerHTML = `<div style="padding:18px 12px;min-height:50px;text-align:center;color:#b0bec5;font-size:15px;">尚未配對共同課表</div>
+                        <div style="text-align:center;margin-top:16px;">
+                            <button id="startPairingBtn" style="background:linear-gradient(90deg, #12214e 0%, #078282 100%);color:#fff;border:none;border-radius:8px;font-size:16px;padding:10px 24px;cursor:pointer;box-shadow:0 2px 8px rgba(0,188,212,0.18);font-weight:600;">開始配對</button>
+                        </div>`;
+                    document.getElementById('startPairingBtn').onclick = function() {
+                        window.location.href='membership/membership.html#tab-friends';
+                    }
+                    return;
+                }
+                const myTarget = getUserTodayTargetFromLocal(myId);
+                // 嘗試從本地抓到夥伴的課表；若沒有，回退到公開 profile 的選擇或再回退到本地已選
+                let partnerTarget = getUserTodayTargetFromLocal(pairing.partnerId);
+                if ((!partnerTarget || (partnerTarget.ride + partnerTarget.run + partnerTarget.swim) === 0) && partnerProfile) {
+                    partnerTarget = parseScheduleEntryAdvanced(partnerProfile.selectedScheduleDistance || partnerProfile.selectedScheduleType || '');
+                }
+                const combinedTarget = {
+                    ride: (myTarget.ride || 0) + (partnerTarget.ride || 0),
+                    run: (myTarget.run || 0) + (partnerTarget.run || 0),
+                    swim: (myTarget.swim || 0) + (partnerTarget.swim || 0),
+                };
+                const myToday = getUserTodayActualFromLocal(myId);
+                const partnerToday = getUserTodayActualFromLocal(pairing.partnerId);
+                const combinedActual = {
+                    ride: (myToday.ride || 0) + (partnerToday.ride || 0),
+                    run: (myToday.run || 0) + (partnerToday.run || 0),
+                    swim: (myToday.swim || 0) + (partnerToday.swim || 0),
+                };
+                // 日誌顯示
+                console.log('Target (合計):', combinedTarget);
+                console.log('Actual (合計):', combinedActual);
+                console.log('我的分項目標/實際:', myTarget, myToday);
+                console.log('夥伴分項目標/實際:', partnerTarget, partnerToday);
+                // 計算總合目標/實際
+                const combinedTargetSum = combinedTarget.ride + combinedTarget.run + combinedTarget.swim;
+                const combinedActualSum = combinedActual.ride + combinedActual.run + combinedActual.swim;
+                const totalRate = combinedTargetSum > 0 ? Math.min(100, Math.round(combinedActualSum/combinedTargetSum*100)) : 0;
+                const myRate = combinedTargetSum > 0 ? Math.min(100, Math.round(combinedActualSum/combinedTargetSum*100)) : 0;
+                const partnerRate = combinedTargetSum > 0 ? Math.min(100, Math.round(combinedActualSum/combinedTargetSum*100)) : 0;
+                // 卡片內容渲染（改為圓餅圖 + 簡約資訊）
+                const totalPercent = totalRate; // 0-100
+                const radius = 42; // donut 半徑
+                const stroke = 10; // 環寬
+                const circumference = 2 * Math.PI * radius;
+                const progressLen = Math.max(0, Math.min(100, totalPercent)) / 100 * circumference;
+                const dashArray = `${progressLen} ${circumference - progressLen}`;
+                const remainingValue = Math.max(0, Math.round(combinedTargetSum - combinedActualSum));
+                const remainingLabel = (combinedTargetSum <= 0 || combinedActualSum <= 0) ? '休息日' : remainingValue;
+
+                const myName = (localStorage.getItem('username') || '我');
+                const partnerName = pairing.partnerName || '夥伴';
+                const truncateName = (name) => {
+                    try {
+                        const n = String(name || '');
+                        const max = 6;
+                        return n.length > max ? n.slice(0, max) + '…' : n;
+                    } catch(_) { return name; }
+                };
+                const myPercent = combinedTargetSum > 0 ? Math.min(100, Math.round(combinedActualSum/combinedTargetSum*100)) : (remainingLabel === '休息日' ? 100 : 0);
+                const partnerPercent = combinedTargetSum > 0 ? Math.min(100, Math.round(combinedActualSum/combinedTargetSum*100)) : (remainingLabel === '休息日' ? 100 : 0);
+                const totalPercentLabel = (remainingLabel === '休息日') ? '100%' : (combinedTargetSum > 0 ? `${Math.min(100, Math.round(combinedActualSum/combinedTargetSum*100))}%` : '0%');
+
+                const patMe = `pat_me_${Date.now()}`;
+                const patPartner = `pat_partner_${Date.now()}`;
+
+                // 判斷本日有目標的分項（騎、跑、游哪幾項）
+                const activeSections = [];
+                ['ride','run','swim'].forEach(type=>{ if(combinedTarget[type]>0) activeSections.push(type); });
+                // 各分項進度百分比
+                const rideRate = combinedTarget.ride > 0 ? Math.min(1, combinedActual.ride / combinedTarget.ride) : null;
+                const runRate = combinedTarget.run > 0 ? Math.min(1, combinedActual.run / combinedTarget.run) : null;
+                const swimRate = combinedTarget.swim > 0 ? Math.min(1, combinedActual.swim / combinedTarget.swim) : null;
+                const sectionRates = [rideRate, runRate, swimRate].filter(r=>r!==null);
+                const avgRate = sectionRates.length ? sectionRates.reduce((a,b)=>a+b,0)/sectionRates.length : 0;
+                const mainTotalRate = Math.round(avgRate*100);
+                // 提前放置剩餘計算，放 mainRemainingLabel 之前：
+                const rideRemain = combinedTarget.ride>0 ? Math.max(0,combinedTarget.ride-combinedActual.ride) : null;
+                const runRemain = combinedTarget.run>0 ? Math.max(0,combinedTarget.run-combinedActual.run) : null;
+                const swimRemain = combinedTarget.swim>0 ? Math.max(0,combinedTarget.swim-combinedActual.swim) : null;
+                const mainRemainingLabel = (sectionRates.length===0) ? '休息日' :
+                  [rideRemain,runRemain,swimRemain].filter(r=>r!==null&&r>0).map((v,i)=> {
+                    if(i===0) return v>0?`騎${v.toFixed(1)}`:'';
+                    if(i===1) return v>0?`跑${v.toFixed(1)}`:'';
+                    if(i===2) return v>0?`游${v.toFixed(1)}`:'';
+                    return '';
+                  }).filter(Boolean).join('、') + (activeSections.length>1? ' 剩餘公里':' 公里');
+                // Debug log
+                console.log('進度率', 'ride:',rideRate, 'run:',runRate, 'swim:',swimRate, 'mean:', avgRate, '剩餘', rideRemain, runRemain, swimRemain);
+
+                const remainArr = [];
+                if (rideRemain > 0) remainArr.push(`<span style=\"color:#b0bec5;font-size:11px;margin:2px 4px;letter-spacing:0.5px;\">騎剩餘：${rideRemain.toFixed(1)} 公里</span>`);
+                if (runRemain > 0) remainArr.push(`<span style=\"color:#b0bec5;font-size:11px;margin:2px 4px;letter-spacing:0.5px;\">跑剩餘：${runRemain.toFixed(1)} 公里</span>`);
+                if (swimRemain > 0) remainArr.push(`<span style=\"color:#b0bec5;font-size:11px;margin:2px 4px;letter-spacing:0.5px;\">游剩餘：${swimRemain.toFixed(1)} 公里</span>`);
+                const remainDetail = remainArr.length ? remainArr.join('') : '';
+
+                const ridePct = combinedTarget.ride>0 ? Math.min(100, Math.round(combinedActual.ride/combinedTarget.ride*100)) : 0;
+                const runPct = combinedTarget.run>0 ? Math.min(100, Math.round(combinedActual.run/combinedTarget.run*100)) : 0;
+                const swimPct = combinedTarget.swim>0 ? Math.min(100, Math.round(combinedActual.swim/combinedTarget.swim*100)) : 0;
+                // 進度條SVG模板
+                function svgCircle(pct,color,label) {
+                  // pct: 百分比, color: 邊框色, label:底下名字
+                  const r = 38, sw = 7;
+                  const c = 2*Math.PI*r;
+                  const p = Math.max(0,Math.min(100,pct));
+                  const filled = p/100*c;
+                  return `
+                    <div style=\"display:flex;flex-direction:column;align-items:center;width:90px;height:108px;\">
+                      <svg width=\"90\" height=\"90\" viewBox=\"0 0 90 90\" style=\"display:block;\">
+                        <circle cx=\"45\" cy=\"45\" r=\"${r}\" stroke=\"#222b37\" stroke-width=\"${sw}\" fill=\"none\"/>
+                        <circle cx=\"45\" cy=\"45\" r=\"${r}\" stroke=\"${color}\" stroke-width=\"${sw}\" fill=\"none\" stroke-linecap=\"round\" style=\"stroke-dasharray:${filled},${c-filled};stroke-dashoffset:0;transition:stroke-dasharray .8s;filter:drop-shadow(0 0 6px ${color}77);\"/>
+                        <text x=\"45\" y=\"52\" text-anchor=\"middle\" font-family=\"Arial\" font-weight=\"bold\" font-size=\"24\" fill=\"#fff\">${p}%</text>
+                      </svg>
+                      <div style=\"color:#888;font-size:13px;letter-spacing:1px;text-align:center;text-shadow:0 1px 6px #000;\">${label}</div>
+                    </div>
+                  `;
+                }
+                // 合併成單一進度條：計算整體完成率
+                const totalTarget = (combinedTarget.swim || 0) + (combinedTarget.ride || 0) + (combinedTarget.run || 0);
+                const totalActual = (combinedActual.swim || 0) + (combinedActual.ride || 0) + (combinedActual.run || 0);
+                const overallPct = totalTarget > 0 ? Math.min(100, Math.round(totalActual / totalTarget * 100)) : 0;
+                
+                const progressRow = `<div style=\"display:flex;justify-content:center;margin-bottom:10px;\">${
+                  svgCircle(overallPct, '#00bcd4', '整體進度')
+                }</div>`;
+                // -- 進度條主進度用新名 --
+                const totalRateMain = totalRate;
+                content.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;">
+                    <div style="color:#b0bec5;">今日剩餘</div>
+                    ${(combinedTarget.ride || combinedTarget.run || combinedTarget.swim) ? `<div style=\"color:#3dcfff;font-size:13px;letter-spacing:0.5px;line-height:1; margin-bottom:3px;\">我們今日目標：
+                      ${combinedTarget.ride ? `騎 ${combinedTarget.ride.toFixed(1)} 公里` : ''}
+                      ${combinedTarget.run ? `跑 ${combinedTarget.run.toFixed(1)} 公里` : ''}
+                      ${combinedTarget.swim ? `游 ${combinedTarget.swim.toFixed(1)} 公里` : ''}
+                    </div>` : ''}
+                    ${(myTarget.ride || myTarget.run || myTarget.swim) ? `<div style=\"color:#b0bec5;font-size:12px;letter-spacing:0.5px;line-height:1; margin:0 0 4px 0;\">我的今日目標：
+                      ${myTarget.ride ? `騎 ${myTarget.ride.toFixed(1)} 公里` : ''}
+                      ${myTarget.run ? `跑 ${myTarget.run.toFixed(1)} 公里` : ''}
+                      ${myTarget.swim ? `游 ${myTarget.swim.toFixed(1)} 公里` : ''}
+                    </div>` : ''}
+                    ${remainDetail ? `<div style=\"margin-bottom:-6px;\">${remainDetail}</div>` : ''}
+                    ${progressRow}
+                    <div style=\"color:#fff;font-weight:800;font-size:18px;\">${mainRemainingLabel==='休息日' ? '休息日' : mainTotalRate+'%'}</div>
+                    <div style=\"color:#999;font-size:10px;margin-top:4px;\">已於 ${new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })} 同步</div>
+                    <button id="resyncBtn" style="background:linear-gradient(90deg, #12214e 0%, #078282 100%);color:#fff;border:none;border-radius:6px;font-size:12px;padding:6px 12px;cursor:pointer;margin-top:8px;box-shadow:0 2px 4px rgba(0,188,212,0.2);">重新同步</button>
+                <div style="text-align:center;">
+                        <button id="unpairBtn" style="padding:8px 16px;border:none;border-radius:8px;background:#f44336;color:#fff;font-size:14px;cursor:pointer;">取消配對</button>
+                </div>
+            </div>`;
+
+                // 頭像設定已移除，因為不再需要複雜的雙人進度圓圈
+
+                // 綁定重新同步按鈕事件
+                const resyncBtn = document.getElementById('resyncBtn');
+                if (resyncBtn) {
+                    resyncBtn.onclick = function() {
+                        console.log('重新同步按鈕被點擊');
+                        renderSharedScheduleCard();
+                    };
+                }
+
+                // 修正取消配對：綁定專用函式，確保點擊有效
+                const unpairBtn = document.getElementById('unpairBtn');
+                if (unpairBtn) unpairBtn.onclick = function(){ unpairSharedSchedule(pairing.partnerId); };
+            }
+
+            // 取得目前登入用戶
+            function getCurrentUser() {
+                return localStorage.getItem('currentUser');
+            }
+
+            // 從資料庫獲取統計資料
+            async function fetchStatsFromDatabase() {
+                const userId = getCurrentUser();
+                const token = localStorage.getItem('token');
+                
+                if (!userId || !token) {
+                    // 如果沒有登入，使用本地資料
+                    calculateWeeklyStatsFromLocal();
+                    updateWeeklyProgressChartFromLocal();
+                    renderWeeklyAchievementCardFromLocal();
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/stats/${userId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (response.ok) {
+                        const statsData = await response.json();
+                        updateStatsUI(statsData);
+                    } else {
+                        console.error('Failed to fetch stats from database, using local data');
+                        // 如果API失敗，使用本地資料
+                        calculateWeeklyStatsFromLocal();
+                        updateWeeklyProgressChartFromLocal();
+                        renderWeeklyAchievementCardFromLocal();
+                    }
+                } catch (error) {
+                    console.error('Error fetching stats:', error);
+                    // 如果API失敗，使用本地資料
+                    calculateWeeklyStatsFromLocal();
+                    updateWeeklyProgressChartFromLocal();
+                    renderWeeklyAchievementCardFromLocal();
+                }
+            }
+
+            // 更新統計UI
+            function updateStatsUI(statsData) {
+                // 更新本週統計
+                const weeklySwimElement = document.getElementById('weeklySwim');
+                const weeklyBikeElement = document.getElementById('weeklyBike');
+                const weeklyRunElement = document.getElementById('weeklyRun');
+                const weeklyTotalElement = document.getElementById('weeklyTotal');
+                
+                if (weeklySwimElement) weeklySwimElement.textContent = Math.round(statsData.weeklyStats.swim);
+                if (weeklyBikeElement) weeklyBikeElement.textContent = Math.round(statsData.weeklyStats.bike);
+                if (weeklyRunElement) weeklyRunElement.textContent = Math.round(statsData.weeklyStats.run);
+                if (weeklyTotalElement) weeklyTotalElement.textContent = Math.round(statsData.weeklyStats.total);
+                
+                // 更新本週進度
+                document.getElementById('swimBar').style.height = statsData.weeklyProgress.swim.rate + '%';
+                document.getElementById('bikeBar').style.height = statsData.weeklyProgress.bike.rate + '%';
+                document.getElementById('runBar').style.height = statsData.weeklyProgress.run.rate + '%';
+                
+                document.getElementById('swimPercent').textContent = statsData.weeklyProgress.swim.rate + '%';
+                document.getElementById('bikePercent').textContent = statsData.weeklyProgress.bike.rate + '%';
+                document.getElementById('runPercent').textContent = statsData.weeklyProgress.run.rate + '%';
+                
+                // 更新每週訓練達成率
+                updateWeeklyAchievementCard(statsData.weeklyAchievements, statsData.currentYear, statsData.currentMonth);
+            }
+
+            // 更新每週訓練達成率卡片（從資料庫資料）
+            function updateWeeklyAchievementCard(weeklyAchievements, year, month) {
+                const achievementList = document.getElementById('weeklyAchievementList');
+                const monthLabel = document.getElementById('achievementMonthLabel');
+                
+                monthLabel.textContent = `${year}年${month}月`;
+                
+                achievementList.innerHTML = '';
+                weeklyAchievements.forEach((week, idx) => {
+                    // 處理日期物件（從伺服器返回的日期字串需要轉換為Date物件）
+                    const startDate = new Date(week.startDate);
+                    const endDate = new Date(week.endDate);
+                    const weekLabel = `第${week.week}週 (${startDate.getMonth() + 1}/${startDate.getDate()} - ${endDate.getMonth() + 1}/${endDate.getDate()})`;
+                    achievementList.innerHTML += `
+                    <div class="achievement-week-card">
+                        <div class="achievement-week-header">${weekLabel}</div>
+                        <div class="achievement-week-progress">
+                            <div class="achievement-bar-bg">
+                                <div class="achievement-bar" style="width:${week.avgRate}%;"></div>
+                            </div>
+                            <span class="achievement-rate" style="margin-left:auto;">${week.avgRate}%</span>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            // 計算本週統計（本地資料備用）
+            function calculateWeeklyStatsFromLocal() {
+                const currentUser = getCurrentUser();
+                let events = {};
+                if (currentUser) {
+                    events = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+                } else {
+                    events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+                }
+                const today = new Date();
+                const day = today.getDay() || 7; // 週日為 0，轉成 7
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - day + 1); // 本週一
+                let weeklySwim = 0;
+                let weeklyBike = 0;
+                let weeklyRun = 0;
+                
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(startOfWeek);
+                    date.setDate(startOfWeek.getDate() + i);
+                    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    
+                    if (events[dateKey]) {
+                        events[dateKey].forEach(event => {
+                            if (typeof event === 'object' && event.type && event.distance !== undefined) {
+                                let type = event.type;
+                                // 處理 Strava 英文類型
+                                if (type === 'Run') type = '跑步';
+                                if (type === 'Ride') type = '騎車';
+                                if (type === 'Swim') type = '游泳';
+                                
+                                const distance = Number(event.distance) || 0;
+                                switch(type) {
+                                    case '游泳': weeklySwim += distance; break;
+                                    case '騎車': weeklyBike += distance; break;
+                                    case '跑步': weeklyRun += distance; break;
+                                }
+                            } else if (typeof event === 'string') {
+                                // 處理字串格式的運動記錄
+                                if (/游泳|swim/i.test(event)) {
+                                    const m = event.match(/([\d.]+)\s*km/i);
+                                    if (m) weeklySwim += Number(m[1]);
+                                } else if (/騎車|bike|cycling/i.test(event)) {
+                                    const m = event.match(/([\d.]+)\s*km/i);
+                                    if (m) weeklyBike += Number(m[1]);
+                                } else if (/跑步|run|running/i.test(event)) {
+                                    const m = event.match(/([\d.]+)\s*km/i);
+                                    if (m) weeklyRun += Number(m[1]);
+                                } else {
+                                    // 預設為跑步
+                                    const m = event.match(/([\d.]+)\s*km/i);
+                                    if (m) weeklyRun += Number(m[1]);
+                                }
+                            }
+                        });
+                    }
+                }
+                
+                const weeklyTotal = weeklySwim + weeklyBike + weeklyRun;
+                
+                // 更新UI
+                const weeklySwimElement = document.getElementById('weeklySwim');
+                const weeklyBikeElement = document.getElementById('weeklyBike');
+                const weeklyRunElement = document.getElementById('weeklyRun');
+                const weeklyTotalElement = document.getElementById('weeklyTotal');
+                
+                if (weeklySwimElement) weeklySwimElement.textContent = Math.round(weeklySwim);
+                if (weeklyBikeElement) weeklyBikeElement.textContent = Math.round(weeklyBike);
+                if (weeklyRunElement) weeklyRunElement.textContent = Math.round(weeklyRun);
+                if (weeklyTotalElement) weeklyTotalElement.textContent = Math.round(weeklyTotal);
+                
+                // 返回計算結果供其他函數使用
+                return { swim: weeklySwim, bike: weeklyBike, run: weeklyRun, total: weeklyTotal };
+            }
+
+            // 每週訓練達成率卡片（本地資料備用）
+            function renderWeeklyAchievementCardFromLocal() {
+                const achievementList = document.getElementById('weeklyAchievementList');
+                const monthLabel = document.getElementById('achievementMonthLabel');
+                // 取得目前顯示的年月
+                let current = window._achievementMonth;
+                if (!current) {
+                    const today = new Date();
+                    current = { year: today.getFullYear(), month: today.getMonth() + 1 };
+                    window._achievementMonth = current;
+                }
+                monthLabel.textContent = `${current.year}年${current.month}月`;
+                // 設定每週目標
+                const weeklyGoal = { swim: 5, bike: 100, run: 20 };
+                // 取得該月第一天與最後一天
+                const firstDay = new Date(current.year, current.month - 1, 1);
+                const lastDay = new Date(current.year, current.month, 0);
+                // 計算該月有幾週
+                const weeks = [];
+                let start = new Date(firstDay);
+                start.setDate(start.getDate() - start.getDay()); // 該月第一週的週日
+                while (start <= lastDay) {
+                    const weekStart = new Date(start);
+                    const weekEnd = new Date(start);
+                    weekEnd.setDate(weekEnd.getDate() + 6);
+                    weeks.push({ start: new Date(weekStart), end: new Date(weekEnd) });
+                    start.setDate(start.getDate() + 7);
+                }
+                // 取得資料
+                const currentUser = getCurrentUser();
+                let events = {};
+                if (currentUser) {
+                    events = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+                } else {
+                    events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+                }
+                // 計算每週達成率
+                achievementList.innerHTML = '';
+                weeks.forEach((w, idx) => {
+                    let swim = 0, bike = 0, run = 0;
+                    let d = new Date(w.start);
+                    while (d <= w.end) {
+                        // 只累加本月範圍內的天數
+                        if (d >= firstDay && d <= lastDay) {
+                            const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                            if (events[dateKey]) {
+                                events[dateKey].forEach(event => {
+                                    // 支援物件型態與字串型態
+                                    if (typeof event === 'object' && event.type && event.distance !== undefined) {
+                                        let type = event.type;
+                                        // 處理 Strava 英文類型
+                                        if (type === 'Run') type = '跑步';
+                                        if (type === 'Ride') type = '騎車';
+                                        if (type === 'Swim') type = '游泳';
+                                        
+                                        const distance = Number(event.distance) || 0;
+                                        switch(type) {
+                                            case '游泳': swim += distance; break;
+                                            case '騎車': bike += distance; break;
+                                            case '跑步': run += distance; break;
+                                        }
+                                    } else if (typeof event === 'string') {
+                                        // 嘗試從字串判斷運動類型與距離
+                                        if (/游泳|swim/i.test(event)) {
+                                            const m = event.match(/([\d.]+)\s*km/i);
+                                            if (m) swim += Number(m[1]);
+                                        } else if (/騎車|bike|cycling/i.test(event)) {
+                                            const m = event.match(/([\d.]+)\s*km/i);
+                                            if (m) bike += Number(m[1]);
+                                        } else if (/跑步|run|running/i.test(event)) {
+                                            const m = event.match(/([\d.]+)\s*km/i);
+                                            if (m) run += Number(m[1]);
+                                        } else {
+                                            // 若只有數字+km，預設為跑步
+                                            const m = event.match(/([\d.]+)\s*km/i);
+                                            if (m) run += Number(m[1]);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        d.setDate(d.getDate() + 1);
+                    }
+                    // 三項平均達成率
+                    const swimRate = Math.min(100, Math.round(swim / weeklyGoal.swim * 100));
+                    const bikeRate = Math.min(100, Math.round(bike / weeklyGoal.bike * 100));
+                    const runRate = Math.min(100, Math.round(run / weeklyGoal.run * 100));
+                    const avgRate = Math.round((swimRate + bikeRate + runRate) / 3);
+                    // 週標籤
+                    const weekLabel = `第${idx + 1}週 (${w.start.getMonth() + 1}/${w.start.getDate()} - ${w.end.getMonth() + 1}/${w.end.getDate()})`;
+                    achievementList.innerHTML += `
+                    <div class="achievement-week-card">
+                        <div class="achievement-week-header">${weekLabel}</div>
+                        <div class="achievement-week-progress">
+                            <div class="achievement-bar-bg">
+                                <div class="achievement-bar" style="width:${avgRate}%;"></div>
+                            </div>
+                            <span class="achievement-rate" style="margin-left:auto;">${avgRate}%</span>
+                        </div>
+                    </div>`;
+                });
+            }
+            // 月份切換
+            function changeAchievementMonth(delta) {
+                let current = window._achievementMonth;
+                if (!current) {
+                    const today = new Date();
+                    current = { year: today.getFullYear(), month: today.getMonth() + 1 };
+                }
+                let y = current.year, m = current.month + delta;
+                if (m < 1) { y--; m = 12; }
+                if (m > 12) { y++; m = 1; }
+                window._achievementMonth = { year: y, month: m };
+                
+                // 檢查是否有登入，如果有則從資料庫獲取該月資料
+                const userId = getCurrentUser();
+                const token = localStorage.getItem('token');
+                
+                if (userId && token) {
+                    fetchStatsForMonth(y, m);
+                } else {
+                    renderWeeklyAchievementCardFromLocal();
+                }
+            }
+
+            // 獲取指定月份的統計資料
+            async function fetchStatsForMonth(year, month) {
+                const userId = getCurrentUser();
+                const token = localStorage.getItem('token');
+                
+                try {
+                    const response = await fetch(`/api/stats/${userId}?year=${year}&month=${month}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (response.ok) {
+                        const statsData = await response.json();
+                        updateWeeklyAchievementCard(statsData.weeklyAchievements, year, month);
+                    } else {
+                        renderWeeklyAchievementCardFromLocal();
+                    }
+                } catch (error) {
+                    console.error('Error fetching stats for month:', error);
+                    renderWeeklyAchievementCardFromLocal();
+                }
+            }
+            // 綁定每週訓練達成率卡片的按鈕
+            const prevBtn = document.getElementById('prevMonthBtn');
+            const nextBtn = document.getElementById('nextMonthBtn');
+            if (prevBtn && nextBtn) {
+                prevBtn.onclick = () => changeAchievementMonth(-1);
+                nextBtn.onclick = () => changeAchievementMonth(1);
+            }
+            // 初始化所有統計
+            fetchStatsFromDatabase()
+                .catch(() => {})
+                .finally(() => {
+                    const pairing = (function(){
+                        const uid = getCurrentUser();
+                        try { return uid ? JSON.parse(localStorage.getItem(`pairing_${uid}`) || 'null') : null; } catch { return null; }
+                    })();
+                    console.log('Shared pairing detected:', pairing);
+                    renderSharedScheduleCard();
+                });
+            
+            // 初始化排行榜
+            fetchLeaderboard();
+
+            // 新增：清除Redis快取，確保API使用最新邏輯
+            const userId = getCurrentUser();
+            const token = localStorage.getItem('token');
+            if (userId && token) {
+                // 清除相關快取
+                fetch('/api/clear-cache', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).catch(err => console.log('清除快取失敗:', err));
+            }
+
+            // 新增：頁面可見性變更時自動刷新統計
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    console.log('頁面重新可見，重新計算統計資料');
+                    // 重新計算本地統計
+                    const localStats = calculateWeeklyStatsFromLocal();
+                    updateWeeklyProgressChartFromLocal();
+                    renderWeeklyAchievementCardFromLocal();
+                    // 重新獲取排行榜
+                    fetchLeaderboard();
+                }
+            });
+
+            // 從資料庫獲取排行榜資料
+            async function fetchLeaderboard() {
+                const userId = getCurrentUser();
+                const token = localStorage.getItem('token');
+                
+                if (!userId || !token) {
+                    // 如果沒有登入，顯示無好友訊息
+                    document.getElementById('leaderboardContent').innerHTML = 
+                        '<div class="no-friends-message">請先登入以查看排行榜</div>';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/leaderboard/${userId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (response.ok) {
+                        const leaderboardData = await response.json();
+                        renderLeaderboard(leaderboardData);
+                    } else {
+                        console.error('Failed to fetch leaderboard from database');
+                        document.getElementById('leaderboardContent').innerHTML = 
+                            '<div class="no-friends-message">無法載入排行榜資料</div>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching leaderboard:', error);
+                    document.getElementById('leaderboardContent').innerHTML = 
+                        '<div class="no-friends-message">載入排行榜時發生錯誤</div>';
+                }
+            }
+
+            // 渲染排行榜
+            function renderLeaderboard(leaderboardData) {
+                const leaderboardContent = document.getElementById('leaderboardContent');
+                // 如果沒有資料，顯示自己
+                if (!leaderboardData || leaderboardData.length === 0) {
+                    // 嘗試從 localStorage 取得自己資訊
+                    const user = JSON.parse(localStorage.getItem('profile_' + getCurrentUser()) || '{}');
+                    const username = user.username || '我';
+                    leaderboardData = [{ username, monthlyRun: 0, rank: 1, isCurrentUser: true }];
+                }
+                // 限制最多顯示10名
+                const limitedData = leaderboardData.slice(0, 10);
+                let html = '';
+                
+                // 輔助函數：渲染頭像
+                function renderAvatar(item) {
+                    if (item.avatarUrl) {
+                        return `<img src="${item.avatarUrl}" alt="${item.displayText || item.username}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                    } else {
+                        return (item.displayText || item.username).charAt(0);
+                    }
+                }
+                
+                // 渲染前10名
+                if (limitedData.length === 1) {
+                    // 只有自己
+                    const me = limitedData[0];
+                    html += `<div class="podium-container" style="justify-content:center;">
+                        <div class="podium-item">
+                            <div class="podium-avatar" style="overflow:hidden;">${renderAvatar(me)}</div>
+                            <div class="podium-base podium-1">${me.monthlyRun.toFixed(1)} km</div>
+                            <div class="podium-username">1</div>
+                        </div>
+                    </div>`;
+                } else if (limitedData.length === 2) {
+                    // 兩人
+                    html += `<div class="podium-container" style="justify-content:center;">
+                        <div class="podium-item">
+                            <div class="podium-avatar" style="overflow:hidden;">${renderAvatar(limitedData[1])}</div>
+                            <div class="podium-base podium-2">${limitedData[1].monthlyRun.toFixed(1)} km</div>
+                            <div class="podium-username" style="font-size:12px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${limitedData[1].displayText || limitedData[1].username}</div>
+                        </div>
+                        <div class="podium-item">
+                            <div class="podium-avatar" style="overflow:hidden;">${renderAvatar(limitedData[0])}</div>
+                            <div class="podium-base podium-1">${limitedData[0].monthlyRun.toFixed(1)} km</div>
+                            <div class="podium-username" style="font-size:12px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${limitedData[0].displayText || limitedData[0].username}</div>
+                        </div>
+                    </div>`;
+                } else {
+                    // 三人以上
+                    const top3 = limitedData.slice(0, 3);
+                    html += '<div class="podium-container">';
+                    if (top3[1]) {
+                        html += `
+                            <div class="podium-item">
+                                <div class="podium-avatar" style="overflow:hidden;">${renderAvatar(top3[1])}</div>
+                                <div class="podium-base podium-2">${top3[1].monthlyRun.toFixed(1)} km</div>
+                                <div class="podium-username" style="font-size:12px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${top3[1].displayText || top3[1].username}</div>
+                            </div>
+                        `;
+                    }
+                    if (top3[0]) {
+                        html += `
+                            <div class="podium-item">
+                                <div class="podium-avatar" style="overflow:hidden;">${renderAvatar(top3[0])}</div>
+                                <div class="podium-base podium-1">${top3[0].monthlyRun.toFixed(1)} km</div>
+                                <div class="podium-username" style="font-size:12px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${top3[0].displayText || top3[0].username}</div>
+                            </div>
+                        `;
+                    }
+                    if (top3[2]) {
+                        html += `
+                            <div class="podium-item">
+                                <div class="podium-avatar" style="overflow:hidden;">${renderAvatar(top3[2])}</div>
+                                <div class="podium-base podium-3">${top3[2].monthlyRun.toFixed(1)} km</div>
+                                <div class="podium-username" style="font-size:12px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${top3[2].displayText || top3[2].username}</div>
+                            </div>
+                        `;
+                    }
+                    html += '</div>';
+                }
+                // 前4~10名卡片
+                const rank4to10 = limitedData.slice(3, 10);
+                rank4to10.forEach((item) => {
+                    const isCurrentUser = item.isCurrentUser;
+                    html += `
+                        <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
+                            <div class="rank-number rank-other">${item.rank}</div>
+                            <div class="user-avatar" style="overflow:hidden;">${renderAvatar(item)}</div>
+                            <div class="user-info">
+                                <div class="username">${item.displayText || item.username}</div>
+                                
+                            </div>
+                            <div class="distance-value">${item.monthlyRun.toFixed(1)} km</div>
+                        </div>
+                    `;
+                });
+                // 額外顯示自己（如果不在前10名）
+                const self = leaderboardData.find(item => item.isCurrentUser);
+                const selfInTop10 = limitedData.some(item => item.isCurrentUser);
+                if (self && !selfInTop10) {
+                    html += `<hr style="border:none;border-top:1px dashed #00bcd4;margin:12px 0;">`;
+                    html += `
+                        <div class="leaderboard-item current-user">
+                            <div class="rank-number rank-other">${self.rank}</div>
+                            <div class="user-avatar" style="overflow:hidden;">${renderAvatar(self)}</div>
+                            <div class="user-info">
+                                <div class="username">${self.displayText || self.username}</div>
+                                
+                            </div>
+                            <div class="distance-value">${self.monthlyRun.toFixed(1)} km</div>
+                        </div>
+                    `;
+                }
+                leaderboardContent.innerHTML = html;
+            }
+
+            // 導航列事件由 nav.js 統一處理
+
+            function updateWeeklyProgressChartFromLocal() {
+                // 取得目前登入用戶
+                const currentUser = getCurrentUser();
+                let events = {};
+                if (currentUser) {
+                    events = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+                } else {
+                    events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+                }
+                // 取得本週週一與週日
+                const today = new Date();
+                const day = today.getDay() || 7; // 週日為 0，轉成 7
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - day + 1); // 本週一
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6); // 本週日
+                // 取得本週課表目標（分母）
+                let plan = {};
+                try {
+                    plan = JSON.parse(localStorage.getItem('chat_v5_CT226_schedules') || '{}');
+                } catch(e) { plan = {}; }
+                let swimGoal = 0, bikeGoal = 0, runGoal = 0;
+                // 英文星期對應
+                const weekDays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                let d = new Date(startOfWeek);
+                while (d <= endOfWeek) {
+                    const weekDay = weekDays[d.getDay()];
+                    const val = plan[weekDay];
+                    if (typeof val === 'string') {
+                        // 游泳
+                        if (/游/i.test(val)) {
+                            const m = val.match(/([\d.]+)\s*[kK]/);
+                            if (m) swimGoal += Number(m[1]);
+                        }
+                        // 跑步
+                        if (/跑/i.test(val)) {
+                            const m = val.match(/([\d.]+)\s*[kK]/);
+                            if (m) runGoal += Number(m[1]);
+                        }
+                        // 騎車
+                        if (/訓練台|騎|單車|自行車|bike/i.test(val)) {
+                            // 若有距離
+                            const m = val.match(/([\d.]+)\s*[kK]/);
+                            if (m) bikeGoal += Number(m[1]);
+                        }
+                    }
+                    d.setDate(d.getDate() + 1);
+                }
+                // 直接抓本週統計卡片的距離（分子）
+                const swim = parseFloat(document.getElementById('weeklySwim').textContent) || 0;
+                const bike = parseFloat(document.getElementById('weeklyBike').textContent) || 0;
+                const run = parseFloat(document.getElementById('weeklyRun').textContent) || 0;
+                // debug log
+                console.log('本週目標:', swimGoal, bikeGoal, runGoal);
+                console.log('本週完成:', swim, bike, run);
+                // 百分比計算（避免分母為0）
+                const swimRate = swimGoal > 0 ? Math.min(100, Math.round(swim / swimGoal * 100)) : 0;
+                const bikeRate = bikeGoal > 0 ? Math.min(100, Math.round(bike / bikeGoal * 100)) : 0;
+                const runRate = runGoal > 0 ? Math.min(100, Math.round(run / runGoal * 100)) : 0;
+                // 更新進度條高度
+                document.getElementById('swimBar').style.height = swimRate + '%';
+                document.getElementById('bikeBar').style.height = bikeRate + '%';
+                document.getElementById('runBar').style.height = runRate + '%';
+                // 更新百分比文字
+                document.getElementById('swimPercent').textContent = swimRate + '%';
+                document.getElementById('bikePercent').textContent = bikeRate + '%';
+                document.getElementById('runPercent').textContent = runRate + '%';
+            }
+
+// 改進的 fetchPartnerSchedule 加入重試機制
+async function fetchPartnerSchedule(userId, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超時
+            
+            const resp = await fetch(`/api/schedules/${userId}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
+            if (!resp.ok) {
+                if (resp.status === 404) return null;
+                throw new Error(`HTTP ${resp.status}`);
+            }
+            
+            const data = await resp.json();
+            if (Array.isArray(data) && data.length > 0) {
+                const weekday = getTodayWeekdayName();
+                const currentWeek = getCurrentWeekIndex();
+                if (data[currentWeek] && data[currentWeek][weekday]) {
+                    const schedule = parseScheduleEntryAdvanced(data[currentWeek][weekday]);
+                    setCachedPartnerSchedule(userId, schedule);
+                    return schedule;
+                }
+            }
+            return null;
+        } catch (error) {
+            console.warn(`fetchPartnerSchedule 重試 ${i + 1}/${retries}:`, error.message);
+            if (i === retries - 1) {
+                console.error('fetchPartnerSchedule 最終失敗:', error);
+                return null;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        }
+    }
+    return null;
+}
+
+// SWR 快取機制
+function getCachedPairing(userId) {
+    try {
+        const cached = localStorage.getItem(`pairing_${userId}`);
+        if (cached) {
+            const data = JSON.parse(cached);
+            // 檢查快取是否過期（5分鐘）
+            if (Date.now() - data.timestamp < 5 * 60 * 1000) {
+                return data.pairing;
+            }
+        }
+    } catch(_) {}
+    return null;
+}
+
+function setCachedPairing(userId, pairing) {
+    try {
+        localStorage.setItem(`pairing_${userId}`, JSON.stringify({
+            pairing: pairing,
+            timestamp: Date.now()
+        }));
+    } catch(_) {}
+}
+
+function getCachedPartnerSchedule(partnerId) {
+    try {
+        const cached = localStorage.getItem(`schedule_${partnerId}`);
+        if (cached) {
+            const data = JSON.parse(cached);
+            // 檢查快取是否過期（10分鐘）
+            if (Date.now() - data.timestamp < 10 * 60 * 1000) {
+                return data.schedule;
+            }
+        }
+    } catch(_) {}
+    return null;
+}
+
+function setCachedPartnerSchedule(partnerId, schedule) {
+    try {
+        localStorage.setItem(`schedule_${partnerId}`, JSON.stringify({
+            schedule: schedule,
+            timestamp: Date.now()
+        }));
+    } catch(_) {}
+}
+
+            // 改進的 fetchPairing 加入重試機制和事件埋點
+async function fetchPairing(userId, retries = 3) {
+    const startTime = Date.now();
+    let attempt = 0;
+    
+    for (let i = 0; i < retries; i++) {
+        attempt = i + 1;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超時
+            
+            const resp = await fetch(`/api/pairing/${userId}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
+            if (!resp.ok) {
+                if (resp.status === 404) {
+                    // 事件埋點：配對不存在
+                    console.log('📊 事件埋點: pairing_not_found', { userId, attempt, duration: Date.now() - startTime });
+                    return null;
+                }
+                throw new Error(`HTTP ${resp.status}`);
+            }
+            
+            const data = await resp.json();
+            if (data && data.paired && data.partnerId) {
+                const pairing = {
+                    partnerId: data.partnerId,
+                    partnerName: data.partnerName || '夥伴',
+                    partnerAvatarUrl: data.partnerAvatarUrl || null,
+                    pairedAt: data.pairedAt || null
+                };
+                setCachedPairing(userId, pairing);
+                
+                // 事件埋點：配對成功
+                console.log('📊 事件埋點: pairing_fetch_success', { 
+                    userId, 
+                    partnerId: data.partnerId, 
+                    attempt, 
+                    duration: Date.now() - startTime 
+                });
+                
+                return pairing;
+            }
+            return null;
+        } catch (error) {
+            console.warn(`fetchPairing 重試 ${i + 1}/${retries}:`, error.message);
+            
+            // 事件埋點：重試
+            console.log('📊 事件埋點: pairing_retry', { 
+                userId, 
+                attempt, 
+                error: error.message, 
+                duration: Date.now() - startTime 
+            });
+            
+            if (i === retries - 1) {
+                console.error('fetchPairing 最終失敗:', error);
+                
+                // 事件埋點：最終失敗
+                console.log('📊 事件埋點: pairing_fetch_failed', { 
+                    userId, 
+                    totalAttempts: retries, 
+                    finalError: error.message, 
+                    totalDuration: Date.now() - startTime 
+                });
+                
+                return null;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // 遞增延遲
+        }
+    }
+    return null;
+}
+        });
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html> 

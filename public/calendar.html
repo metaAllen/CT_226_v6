@@ -1,0 +1,149 @@
+// 通用帳號專屬 localStorage 存取
+function getUserKey(key) {
+    const user = localStorage.getItem('currentUser');
+    return user ? `${key}_${user}` : key;
+}
+function setUserData(key, value) {
+    localStorage.setItem(getUserKey(key), JSON.stringify(value));
+}
+function getUserData(key, fallback = null) {
+    const val = localStorage.getItem(getUserKey(key));
+    if (!val) return fallback;
+    try { return JSON.parse(val); } catch { return fallback; }
+}
+// 取得帳號專屬課表設定
+function getSelectedSchedule(type) {
+    return getUserData(type, '');
+}
+function saveSelectedSchedule(type, distance, level) {
+    setUserData('selectedScheduleType', type);
+    setUserData('selectedScheduleDistance', distance);
+    setUserData('selectedScheduleLevel', level || '');
+    if ((type === 'Ironman' && distance === '113') || (type === 'LAVA 完賽樂園' && distance === '113')) {
+        setUserData('schedules', schedule_113_eagle);
+    } else if (type === 'Challenge Taiwan' && distance === '226') {
+        if (typeof schedule_226_duck !== 'undefined') {
+            setUserData('schedules', schedule_226_duck);
+        }
+    } else {
+        setUserData('schedules', []);
+    }
+}
+function getUserSchedules() {
+    return getUserData('schedules', []);
+}
+function getGoals() {
+    return getUserData('trainingGoals', []);
+}
+function saveGoals(goals) {
+    setUserData('trainingGoals', goals);
+    if (localStorage.getItem('token')) syncToCloud();
+}
+function getCalendarEvents() {
+    return getUserData('calendarEvents', {});
+}
+function setCalendarEvents(val) {
+    setUserData('calendarEvents', val);
+}
+
+// 同步資料到伺服器
+async function syncToCloud() {
+    const userId = localStorage.getItem('currentUser');
+    const token = localStorage.getItem('token');
+    if (!userId || !token) return;
+    
+    try {
+        // 先從伺服器獲取現有數據
+        const response = await fetch(`/api/user-data/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        let existingData = {};
+        if (response.ok) {
+            const result = await response.json();
+            existingData = result.data || {};
+        }
+        
+        // 只更新需要同步的字段，保留其他數據（如個人資料）
+        const updatedData = {
+            ...existingData,
+            trainingGoals: JSON.parse(localStorage.getItem(`trainingGoals_${userId}`) || '[]'),
+            calendarEvents: JSON.parse(localStorage.getItem(`calendarEvents_${userId}`) || '{}'),
+            schedules: JSON.parse(localStorage.getItem(`schedules_${userId}`) || '[]'),
+            todaySchedule: JSON.parse(localStorage.getItem(`todaySchedule_${userId}`) || '""'),
+            chatHistory: JSON.parse(localStorage.getItem(`chatHistory_${userId}`) || '[]'),
+            selectedScheduleType: JSON.parse(localStorage.getItem(`selectedScheduleType_${userId}`) || 'null'),
+            selectedScheduleDistance: JSON.parse(localStorage.getItem(`selectedScheduleDistance_${userId}`) || 'null'),
+            selectedScheduleLevel: JSON.parse(localStorage.getItem(`selectedScheduleLevel_${userId}`) || 'null'),
+            events: JSON.parse(localStorage.getItem(`events_${userId}`) || 'null'),
+            profile: JSON.parse(localStorage.getItem(`profile_${userId}`) || '{}'),
+            stravaSyncEnabled: localStorage.getItem('stravaSyncEnabled') === 'true'
+        };
+        
+        await fetch(`/api/user-data/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ data: updatedData })
+        });
+    } catch (error) {
+        console.error('同步到雲端失敗:', error);
+    }
+}
+
+// 從伺服器取得資料
+async function fetchCloudData(userId, token) {
+    const res = await fetch(`/api/user-data/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+        const { data } = await res.json();
+        Object.keys(data).forEach(key => {
+            localStorage.setItem(`${key}_${userId}`, JSON.stringify(data[key]));
+        });
+        
+        // 同步 Strava 狀態到本地
+        if (data.stravaSyncEnabled !== undefined) {
+            localStorage.setItem('stravaSyncEnabled', data.stravaSyncEnabled.toString());
+        }
+        
+        // 可觸發 UI 更新
+    }
+}
+
+function setupAutoSync() {
+    setInterval(syncToCloud, 60000);
+}
+
+function logout() {
+    const userId = localStorage.getItem('currentUser');
+    const keys = [
+        'trainingGoals', 'calendarEvents', 'schedules', 'todaySchedule',
+        'chatHistory', 'selectedScheduleType', 'selectedScheduleDistance',
+        'selectedScheduleLevel', 'events'
+    ];
+    keys.forEach(key => localStorage.removeItem(`${key}_${userId}`));
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('token');
+}
+
+window.addEventListener('load', () => {
+    userId = localStorage.getItem('currentUser');
+    token = localStorage.getItem('token');
+    if (userId && token) {
+        fetchCloudData(userId, token);
+        setupAutoSync();
+    }
+});
+
+function getSchedules() {
+    const userId = localStorage.getItem('currentUser');
+    return JSON.parse(localStorage.getItem(`schedules_${userId}`) || '[]');
+}
+
+function getEvents() {
+    const userId = localStorage.getItem('currentUser');
+    return JSON.parse(localStorage.getItem(`events_${userId}`) || '[]');
+} 

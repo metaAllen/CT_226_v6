@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清除Token - 三項都會累</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            color: white;
+            position: relative;
+        }
+
+        /* 背景動畫效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(33, 150, 243, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(156, 39, 176, 0.05) 0%, transparent 50%);
+            animation: backgroundFloat 25s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg) scale(1); 
+                opacity: 0.8;
+            }
+            25% { 
+                transform: translateY(-15px) rotate(0.5deg) scale(1.02); 
+                opacity: 1;
+            }
+            50% { 
+                transform: translateY(10px) rotate(-0.5deg) scale(0.98); 
+                opacity: 0.9;
+            }
+            75% { 
+                transform: translateY(-5px) rotate(0.3deg) scale(1.01); 
+                opacity: 0.95;
+            }
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .loading {
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #00bcd4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>正在清除舊的登入資料...</h2>
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+        <p>請稍候，正在重新導向到主頁...</p>
+    </div>
+
+    <script>
+        // 清除所有相關的localStorage項目
+        function clearAllData() {
+            const keys = [
+                'token',
+                'currentUser',
+                'trainingGoals',
+                'calendarEvents',
+                'schedules',
+                'todaySchedule',
+                'chatHistory',
+                'selectedScheduleType',
+                'selectedScheduleDistance',
+                'selectedScheduleLevel',
+                'events',
+                'profile'
+            ];
+            
+            // 清除所有用戶相關的數據
+            keys.forEach(key => {
+                localStorage.removeItem(key);
+                // 也清除帶用戶ID的鍵
+                const userId = localStorage.getItem('currentUser');
+                if (userId) {
+                    localStorage.removeItem(`${key}_${userId}`);
+                }
+            });
+            
+            // 清除所有可能的用戶數據
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('user_') || key.includes('_user_'))) {
+                    localStorage.removeItem(key);
+                }
+            }
+            
+            console.log('所有登入資料已清除');
+        }
+        
+        // 執行清除並重新導向
+        clearAllData();
+        
+        // 延遲一下再重新導向，讓用戶看到清除過程
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 2000);
+    </script>
+</body>
+</html> 

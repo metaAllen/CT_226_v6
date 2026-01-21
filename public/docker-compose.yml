@@ -1,0 +1,43 @@
+version: '3.1'
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: triathlon
+      MYSQL_USER: triuser
+      MYSQL_PASSWORD: tripassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  app:
+    image: node:18-alpine
+    restart: always
+    working_dir: /app
+    depends_on:
+      - db
+    # 若你的 Redis 在主機 localhost 且 server.js 直接連 localhost:6379，建議改用 host 網路模式
+    # network_mode: host
+    ports:
+      - "3000:3000"
+      - "443:443"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: triuser
+      DB_PASS: tripassword
+      DB_NAME: triathlon
+      JWT_SECRET: your_jwt_secret
+      REFRESH_TOKEN_SECRET: your_refresh_jwt_secret
+    volumes:
+      - ./:/app:rw
+      - /etc/letsencrypt/live/ironshrimp.duckdns.org:/etc/letsencrypt/live/ironshrimp.duckdns.org:ro
+    command: sh -c "npm ci && node server.js"
+
+volumes:
+  db_data: 

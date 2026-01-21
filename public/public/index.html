@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三項都會累</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            position: relative;
+        }
+
+        /* 背景動畫效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(33, 150, 243, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(156, 39, 176, 0.05) 0%, transparent 50%);
+            animation: backgroundFloat 25s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg) scale(1); 
+                opacity: 0.8;
+            }
+            25% { 
+                transform: translateY(-15px) rotate(0.5deg) scale(1.02); 
+                opacity: 1;
+            }
+            50% { 
+                transform: translateY(10px) rotate(-0.5deg) scale(0.98); 
+                opacity: 0.9;
+            }
+            75% { 
+                transform: translateY(-5px) rotate(0.3deg) scale(1.01); 
+                opacity: 0.95;
+            }
+        }
+        body {
+            width: 100vw;
+            min-height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 420px;
+            height: 100dvh;
+            min-height: 0;
+            background: rgba(34, 40, 49, 0.98);
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+            border: 1.5px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(4px);
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top);
+            position: relative;
+        }
+        .header {
+            width: 100%;
+            background: linear-gradient(90deg, #12214e 0%, #078282 100%);
+            color: white;
+            text-align: center;
+            padding: 20px 0 16px 0;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .content {
+            flex: 1;
+            width: 100%;
+            padding: 20px;
+            padding-bottom: 80px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        /* 自定義滾動條樣式 */
+        .content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+        .content::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 4px;
+        }
+        .content::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+        /* Firefox 滾動條樣式 */
+        .content {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: slideInUp 0.8s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .card h2 {
+            margin: 0 0 12px 0;
+            color: #00bcd4;
+            font-size: 18px;
+        }
+        .card p {
+            margin: 0;
+            color: #b0bec5;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .stat-item {
+            background: rgba(0,188,212,0.1);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00bcd4;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #b0bec5;
+        }
+        /* 導航列樣式由 nav.js 統一處理 */
+                /* 聊天按鈕特殊樣式由 nav.js 統一處理 */
+        @media (max-width: 500px) {
+            .container {
+                max-width: 100vw;
+                height: 100dvh;
+                min-height: 0;
+                border-radius: 0;
+                padding-bottom: 60px;
+            }
+        }
+        /* ====== 簡約目標賽事專用 ====== */
+        .goal-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            padding: 18px 18px 14px 18px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            transition: box-shadow 0.2s, background 0.2s;
+        }
+        .goal-card:hover {
+            background: rgba(0,188,212,0.07);
+            box-shadow: 0 4px 16px rgba(0,188,212,0.10);
+        }
+        .goal-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #00bcd4;
+            margin-bottom: 2px;
+        }
+        .goal-meta {
+            font-size: 13px;
+            color: #b0bec5;
+            margin-bottom: 2px;
+        }
+        .goal-actions {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            display: flex;
+            gap: 4px;
+        }
+        .goal-action-btn {
+            background: none;
+            border: none;
+            color: #b0bec5;
+            font-size: 17px;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .goal-action-btn:hover {
+            background: #e0f7fa;
+            color: #00bcd4;
+        }
+        #addGoalBtn {
+            background: #00bcd4;
+            color: #fff;
+            border: none;
+            padding: 10px 0;
+            border-radius: 14px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(0,188,212,0.08);
+            transition: background 0.2s;
+        }
+        #addGoalBtn:hover {
+            background: #0097a7;
+        }
+        /* 彈窗簡約化 */
+        #goalModal {
+            background: rgba(0,0,0,0.18)!important;
+            z-index: 3000;
+        }
+        #goalForm {
+            background: #23272f!important;
+            border-radius: 20px!important;
+            box-shadow: 0 6px 32px rgba(0,188,212,0.10)!important;
+            padding: 32px 22px 22px 22px!important;
+            min-width: 260px;
+            max-width: 96vw;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        #goalForm input, #goalForm select {
+            padding: 12px 10px;
+            border-radius: 10px;
+            border: none;
+            background: #181c22;
+            color: #fff;
+            font-size: 15px;
+            margin-bottom: 0;
+            outline: none;
+            transition: background 0.2s;
+        }
+        #goalForm input:focus, #goalForm select:focus {
+            background: #23272f;
+        }
+        #goalForm button[type="submit"], #goalForm button[type="button"] {
+            padding: 10px 0;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(90deg, #12214e 0%, #078282 100%);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,188,212,0.10);
+            transition: background 0.3s, transform 0.2s;
+            margin: 0 0 0 8px;
+            min-width: 80px;
+        }
+        #goalForm button[type="submit"]:hover, #goalForm button[type="button"]:hover {
+            background: linear-gradient(90deg, #078282 0%, #12214e 100%);
+            transform: scale(1.04);
+        }
+        #goalError {
+            color: #ff5252;
+            font-size: 14px;
+            min-height: 18px;
+            margin-bottom: 2px;
+            text-align: left;
+        }
+        @media (max-width: 500px) {
+            #goalForm {
+                padding: 18px 6vw 18px 6vw!important;
+                border-radius: 0 0 18px 18px!important;
+            }
+        }
+        .level-card {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px 0 rgba(0,188,212,0.18);
+            padding: 18px 16px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 60px;
+            animation: fadeInOpacity 0.4s cubic-bezier(.4,2,.6,1) both;
+            margin-bottom: 2px;
+            max-width: 350px;
+            width: 100%;
+            word-break: break-all;
+            box-sizing: border-box;
+        }
+        .level-icon {
+            font-size: 2.5rem;
+            margin-bottom: 6px;
+            /* 移除藍色發光 */
+            filter: none !important;
+        }
+        .level-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+            text-align: center;
+            width: 100%;
+            /* 取消漸層色 */
+            background: none !important;
+            -webkit-background-clip: initial !important;
+            -webkit-text-fill-color: initial !important;
+            background-clip: initial !important;
+            color: inherit;
+        }
+        .level-shrimp .level-title {
+            color: #00bcd4 !important;
+        }
+        .level-duck .level-title {
+            color: #ffd600 !important;
+        }
+        .level-bird .level-title {
+            color: #FF69B4 !important;
+        }
+        .level-desc {
+            font-size: 0.95rem;
+            color: #e0e0e0;
+            text-align: center;
+            line-height: 1.7;
+            word-break: break-word;
+            width: 100%;
+            margin: 0 auto;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .level-shrimp {
+            border: 2px solid #00bcd4;
+            box-shadow: 0 0 12px #00bcd4aa;
+        }
+        .level-duck {
+            border: 2px solid #ffd600;
+            box-shadow: 0 0 12px #ffd60099;
+        }
+        .level-bird {
+            border: 2px solid #ff5252;
+            box-shadow: 0 0 12px #ff525299;
+        }
+        .level-bird .level-title {
+            color: #ff5252 !important;
+        }
+        @keyframes fadeInOpacity {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        #scheduleForm {
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+        #scheduleForm::-webkit-scrollbar {
+            width: 8px;
+        }
+        #scheduleForm::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+        #scheduleForm::-webkit-scrollbar-thumb {
+            background: rgba(0,188,212,0.3);
+            border-radius: 4px;
+        }
+        #scheduleForm::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,188,212,0.5);
+        }
+        #scheduleForm {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Home</div>
+        <div class="content">
+            <div class="card">
+                <h2>今日課表</h2>
+                <p id="todayTraining">載入中...</p>
+            </div>
+            <div class="card">
+                <h2>目前課表</h2>
+                <button id="addScheduleBtn" style="background:#00bcd4;color:#fff;border:none;padding:10px 0;border-radius:14px;cursor:pointer;width:100%;display:block;margin:0 auto 12px auto;font-size:16px;font-weight:600;box-shadow:0 2px 8px rgba(0,188,212,0.08);transition:background 0.2s;">選擇課表</button>
+                <div class="goal-card" style="margin-bottom:0;">
+                    <div id="currentScheduleDiv" style="color:#b0bec5;font-size:15px;line-height:1.6;margin-top:10px;text-align:center;"></div>
+                    <div id="countdownInline" style="font-size:32px;color:#00bcd4;font-weight:900;margin-top:18px;display:none;text-align:center;line-height:1.2;"></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>參加賽事</h2>
+                <button id="addGoalBtn" style="background:#00bcd4;color:#fff;border:none;padding:10px 0;border-radius:14px;cursor:pointer;width:100%;display:block;margin:0 auto 12px auto;font-size:16px;font-weight:600;box-shadow:0 2px 8px rgba(0,188,212,0.08);transition:background 0.2s;">新增賽事</button>
+                <div id="goalsList">載入中...</div>
+            </div>
+            <!-- 目標編輯表單彈窗 -->
+            <div id="goalModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:3000;justify-content:center;align-items:center;transition:opacity 0.2s;opacity:0;">
+                <form id="goalForm" style="background:#222831;padding:24px 20px;border-radius:14px;min-width:260px;max-width:90vw;box-shadow:0 4px 24px rgba(0,0,0,0.18);display:flex;flex-direction:column;gap:12px;position:relative;">
+                    <h3 style="color:#00bcd4;margin:0 0 8px 0;">賽事</h3>
+                    <div id="goalError" style="color:#ff5252;font-size:14px;min-height:18px;margin-bottom:2px;"></div>
+                    <input id="goalName" placeholder="賽事名稱" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#333;color:#fff;" />
+                    <input id="goalDate" type="date" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#333;color:#fff;" />
+                    <select id="goalType" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#333;color:#fff;">
+                        <option value="鐵人三項">鐵人三項</option>
+                        <option value="游泳">游泳</option>
+                        <option value="騎車">騎車</option>
+                        <option value="跑步">跑步</option>
+                        <option value="越野跑">越野跑</option>
+                        <option value="其他">其他</option>
+                    </select>
+                    <input id="goalDistance" type="number" min="0" step="0.1" placeholder="距離 (km)" required style="padding:8px;border-radius:6px;border:1px solid #444;background:#333;color:#fff;" />
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button type="button" id="cancelGoalBtn" style="background:#888;color:#fff;border:none;padding:6px 16px;border-radius:6px;">取消</button>
+                        <button type="submit" style="background:#00bcd4;color:#fff;border:none;padding:6px 16px;border-radius:6px;">儲存</button>
+                    </div>
+                </form>
+            </div>
+            <!-- 選擇課表 Modal -->
+            <div id="scheduleModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:3000;justify-content:center;align-items:center;transition:opacity 0.2s;opacity:0;">
+                <form id="scheduleForm" style="background:#23272f;padding:32px 22px 22px 22px;border-radius:20px;min-width:260px;max-width:96vw;box-shadow:0 6px 32px rgba(0,188,212,0.10);display:flex;flex-direction:column;gap:18px;">
+                    <h3 style="color:#00bcd4;margin:0 0 8px 0;">課表</h3>
+                    <div id="scheduleError" style="color:#ff5252;font-size:14px;min-height:18px;margin-bottom:2px;"></div>
+                    <div>
+                        <label for="modalScheduleTypeSelect" style="color:#b0bec5;font-size:15px;">選擇課表</label>
+                        <select id="modalScheduleTypeSelect" style="width:100%;padding:8px;border-radius:10px;border:1px solid #444;background:#333;color:#fff;margin-top:6px;">
+                            <option value="">請選擇課表</option>
+                            <option value="Challenge Taiwan">Challenge Taiwan</option>
+                            <option value="Ironman">Ironman</option>
+                            <option value="LAVA 完賽樂園">LAVA 完賽樂園</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="modalDistanceSelect" style="color:#b0bec5;font-size:15px;">選擇距離</label>
+                        <select id="modalDistanceSelect" style="width:100%;padding:8px;border-radius:10px;border:1px solid #444;background:#333;color:#fff;margin-top:6px;">
+                            <option value="">請選擇距離</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="modalLevelSelect" style="color:#b0bec5;font-size:15px;">課表等級</label>
+                        <select id="modalLevelSelect" style="width:100%;padding:8px;border-radius:10px;border:1px solid #444;background:#333;color:#fff;margin-top:6px;">
+                            <option value="">請選擇等級</option>
+                            <option value="軟腳蝦">軟腳蝦</option>
+                            <option value="滑水鴨">滑水鴨</option>
+                            <option value="老鳥">老鳥</option>
+                        </select>
+                        <div id="levelIntro" style="margin-top:8px;min-height:60px;"></div>
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button type="button" id="cancelScheduleBtn" style="background:#888;color:#fff;border:none;padding:6px 16px;border-radius:6px;">取消</button>
+                        <button type="submit" style="background:#00bcd4;color:#fff;border:none;padding:6px 16px;border-radius:6px;">儲存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 導航列將由 nav.js 自動生成 -->
+    </div>
+
+    <script>
+        const schedule_113_eagle = [
+            // 第1週
+            { 'Monday': '休息日', 'Tuesday': '休息日', 'Wednesday': '騎25K (或訓練台50分)', 'Thursday': '跑6K', 'Friday': '游1K', 'Saturday': '騎40K (或訓練台80分)', 'Sunday': '跑10K' },
+            // 第2週
+            { 'Monday': '休息日', 'Tuesday': '游1K', 'Wednesday': '騎25K (或訓練台50分)', 'Thursday': '跑6K', 'Friday': '休息日', 'Saturday': '騎40K (或訓練台80分)', 'Sunday': '跑12K' },
+            // 第3週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎45K (或訓練台90分)', 'Sunday': '跑12K' },
+            // 第4週
+            { 'Monday': '休息日', 'Tuesday': '休息日', 'Wednesday': '騎25K (或訓練台50分)', 'Thursday': '跑6K', 'Friday': '游1K', 'Saturday': '騎40K (或訓練台80分)', 'Sunday': '跑12K' },
+            // 第5週
+            { 'Monday': '休息日', 'Tuesday': '游1K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎45K (或訓練台90分)', 'Sunday': '跑12K' },
+            // 第6週
+            { 'Monday': '休息日', 'Tuesday': '游1K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎30K (或訓練台60分) + 跑6K', 'Sunday': '休息日' },
+            // 第7週
+            { 'Monday': '休息日', 'Tuesday': '騎35K (或訓練台70分)', 'Wednesday': '跑12K', 'Thursday': '游1.2K', 'Friday': '休息日', 'Saturday': '騎30K (或訓練台60分) + 跑8K', 'Sunday': '休息日' },
+            // 第8週
+            { 'Monday': '休息日', 'Tuesday': '騎30K (或訓練台60分)', 'Wednesday': '跑10K', 'Thursday': '休息日', 'Friday': '游1K', 'Saturday': '騎40K (或訓練台80分) + 跑6K', 'Sunday': '休息日' },
+            // 第9週
+            { 'Monday': '休息日', 'Tuesday': '騎30K (或訓練台60分)', 'Wednesday': '跑10K', 'Thursday': '休息日', 'Friday': '游1K', 'Saturday': '騎40K (或訓練台80分) + 跑8K', 'Sunday': '休息日' },
+            // 第10週
+            { 'Monday': '休息日', 'Tuesday': '游1K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎40K (或訓練台80分)', 'Sunday': '跑10K' },
+            // 第11週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎45K (或訓練台90分)', 'Sunday': '跑12K' },
+            // 第12週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎50K (或訓練台100分)', 'Sunday': '跑15K' },
+            // 第13週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎70K (或訓練台140分)', 'Sunday': '跑18K' },
+            // 第14週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎45K (或訓練台90分) + 跑5K', 'Sunday': '騎45K (或訓練台90分) + 跑5K' },
+            // 第15週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎60K (或訓練台120分)', 'Sunday': '跑15K' },
+            // 第16週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎40K (或訓練台80分)', 'Thursday': '跑12K', 'Friday': '休息日', 'Saturday': '騎70K (或訓練台140分)', 'Sunday': '跑18K' },
+            // 第17週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎40K (或訓練台80分)', 'Thursday': '跑12K', 'Friday': '休息日', 'Saturday': '騎45K (或訓練台90分) + 跑7K', 'Sunday': '騎45K (或訓練台90分) + 跑7K' },
+            // 第18週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎45K (或訓練台90分)', 'Thursday': '跑12K', 'Friday': '休息日', 'Saturday': '騎85K (或訓練台170分)', 'Sunday': '跑20K' },
+            // 第19週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎45K (或訓練台90分)', 'Thursday': '跑12K', 'Friday': '休息日', 'Saturday': '騎90K (或訓練台180分)', 'Sunday': '跑20K' },
+            // 第20週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎60K (或訓練台120分)', 'Sunday': '跑15K' },
+            // 第21週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎40K (或訓練台80分)', 'Thursday': '跑12K', 'Friday': '休息日', 'Saturday': '騎65K (或訓練台130分) + 跑15K', 'Sunday': '休息日' },
+            // 第22週
+            { 'Monday': '休息日', 'Tuesday': '騎35K (或訓練台70分)', 'Wednesday': '跑12K', 'Thursday': '休息日', 'Friday': '游1.5K', 'Saturday': '騎85K (或訓練台170分) + 跑12K', 'Sunday': '休息日' },
+            // 第23週
+            { 'Monday': '休息日', 'Tuesday': '騎40K (或訓練台80分)', 'Wednesday': '跑10K', 'Thursday': '休息日', 'Friday': '游1.5K', 'Saturday': '騎55K (或訓練台110分) + 跑10K', 'Sunday': '休息日' },
+            // 第24週
+            { 'Monday': '游1K', 'Tuesday': '騎30K (或訓練台60分)', 'Wednesday': '跑8K（早上七點前完成）', 'Thursday': '休息日', 'Friday': '休息日', 'Saturday': '完賽樂園 113', 'Sunday': '休息日' }
+        ];
+
+        const schedule_113_shrimp = [
+            // 第1週
+            { 'Monday': '休息日', 'Tuesday': '休息日', 'Wednesday': '騎15K (或訓練台30分)', 'Thursday': '休息日', 'Friday': '游0.5K', 'Saturday': '騎30K (或訓練台60分)', 'Sunday': '跑6K' },
+            // 第2週
+            { 'Monday': '休息日', 'Tuesday': '游0.5K', 'Wednesday': '休息日', 'Thursday': '跑5K', 'Friday': '休息日', 'Saturday': '騎30K (或訓練台60分)', 'Sunday': '跑8K' },
+            // 第3週
+            { 'Monday': '休息日', 'Tuesday': '游0.8K', 'Wednesday': '騎15K (或訓練台30分)', 'Thursday': '跑5K', 'Friday': '休息日', 'Saturday': '騎30K (或訓練台60分)', 'Sunday': '跑10K' },
+            // 第4週
+            { 'Monday': '休息日', 'Tuesday': '休息日', 'Wednesday': '騎15K (或訓練台30分)', 'Thursday': '游0.5K', 'Friday': '休息日', 'Saturday': '騎20K (或訓練台40分)', 'Sunday': '跑8K' },
+            // 第5週
+            { 'Monday': '休息日', 'Tuesday': '游0.8K', 'Wednesday': '騎15K (或訓練台30分)', 'Thursday': '跑6K', 'Friday': '休息日', 'Saturday': '騎30K (或訓練台60分)', 'Sunday': '跑8K' },
+            // 第6週
+            { 'Monday': '休息日', 'Tuesday': '游0.8K', 'Wednesday': '騎20K (或訓練台40分)', 'Thursday': '跑6K', 'Friday': '休息日', 'Saturday': '騎20K (或訓練台40分) + 跑3K', 'Sunday': '休息日' },
+            // 第7週
+            { 'Monday': '休息日', 'Tuesday': '騎20K (或訓練台40分)', 'Wednesday': '跑8K', 'Thursday': '游1K', 'Friday': '休息日', 'Saturday': '騎25K (或訓練台50分) + 跑3K', 'Sunday': '休息日' },
+            // 第8週
+            { 'Monday': '休息日', 'Tuesday': '騎15K (或訓練台30分)', 'Wednesday': '跑8K', 'Thursday': '休息日', 'Friday': '游1K', 'Saturday': '騎30K (或訓練台60分) + 跑6K', 'Sunday': '休息日' },
+            // 第9週
+            { 'Monday': '休息日', 'Tuesday': '騎20K (或訓練台40分)', 'Wednesday': '跑6K', 'Thursday': '休息日', 'Friday': '游1K', 'Saturday': '騎30K (或訓練台60分) + 跑8K', 'Sunday': '休息日' },
+            // 第10週
+            { 'Monday': '休息日', 'Tuesday': '游0.8K', 'Wednesday': '騎20K (或訓練台40分)', 'Thursday': '跑6K', 'Friday': '休息日', 'Saturday': '騎30K (或訓練台60分)', 'Sunday': '跑10K' },
+            // 第11週
+            { 'Monday': '休息日', 'Tuesday': '游1K', 'Wednesday': '騎25K (或訓練台50分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎40K (或訓練台80分)', 'Sunday': '跑10K' },
+            // 第12週
+            { 'Monday': '休息日', 'Tuesday': '游1K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎50K (或訓練台80分)', 'Sunday': '跑12K' },
+            // 第13週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎55K (或訓練台110分)', 'Sunday': '跑12K' },
+            // 第14週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑6K', 'Friday': '休息日', 'Saturday': '騎30K (或訓練台60分) + 跑5K', 'Sunday': '騎30K (或訓練台60分) + 跑5K' },
+            // 第15週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎40K (或訓練台80分)', 'Sunday': '跑12K' },
+            // 第16週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎40K (或訓練台80分)', 'Sunday': '跑15K' },
+            // 第17週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎35K (或訓練台70分) + 跑5K', 'Sunday': '騎35K (或訓練台70分) + 跑5K' },
+            // 第18週
+            { 'Monday': '休息日', 'Tuesday': '游1.5K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎50K (或訓練台100分)', 'Sunday': '跑15K' },
+            // 第19週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎55K (或訓練台110分)', 'Sunday': '跑15K' },
+            // 第20週
+            { 'Monday': '休息日', 'Tuesday': '游1K', 'Wednesday': '騎35K (或訓練台70分)', 'Thursday': '跑10K', 'Friday': '休息日', 'Saturday': '騎60K (或訓練台120分)', 'Sunday': '跑15K' },
+            // 第21週
+            { 'Monday': '休息日', 'Tuesday': '游1.2K', 'Wednesday': '騎30K (或訓練台60分)', 'Thursday': '跑8K', 'Friday': '休息日', 'Saturday': '騎50K (或訓練台100分) + 跑8K', 'Sunday': '休息日' },
+            // 第22週
+            { 'Monday': '休息日', 'Tuesday': '騎35K (或訓練台70分)', 'Wednesday': '跑10K', 'Thursday': '休息日', 'Friday': '游1.2K', 'Saturday': '騎60K (或訓練台120分) + 跑10K', 'Sunday': '休息日' },
+            // 第23週
+            { 'Monday': '休息日', 'Tuesday': '騎30K (或訓練台60分)', 'Wednesday': '跑7K', 'Thursday': '休息日', 'Friday': '游1.2K', 'Saturday': '騎45K (或訓練台90分) + 跑8K', 'Sunday': '休息日' },
+            // 第24週
+            { 'Monday': '游1K', 'Tuesday': '騎30K (或訓練台60分)', 'Wednesday': '跑7K（早上七點前完成）', 'Thursday': '休息日', 'Friday': '休息日', 'Saturday': 'RACE DAY', 'Sunday': '休息日' }
+        ];
+
+        const schedule_226_duck = [
+            // 第1週
+            { 'Monday': '放假', 'Tuesday': '游2.5K', 'Wednesday': '訓練台60分', 'Thursday': '跑6 k', 'Friday': '游2.5K', 'Saturday': '水月公園團騎85K，再跑3 K。', 'Sunday': '跑12 K' },
+            // 第2週
+            { 'Monday': '放假', 'Tuesday': '游2.5K', 'Wednesday': '訓練台60分', 'Thursday': '跑12 K', 'Friday': '游2.5K', 'Saturday': '水月公園團騎75K，再跑5K。', 'Sunday': '水月公園團騎75K，再跑5K。' },
+            // 第3週
+            { 'Monday': '放假', 'Tuesday': '訓練台60分，再跑3 K。', 'Wednesday': '訓練台60分，再跑3 K。', 'Thursday': '跑7 K', 'Friday': '游2.5K', 'Saturday': '水月公園團騎75K，再跑3K。', 'Sunday': '跑15 K' },
+            // 第4週
+            { 'Monday': '放假', 'Tuesday': '放假', 'Wednesday': '游2K', 'Thursday': '訓練台60分', 'Friday': '放假', 'Saturday': '水月公園團騎75K，再跑3K。', 'Sunday': '水月公園團騎75K，再跑3K。' },
+            // 第5週
+            { 'Monday': '放假', 'Tuesday': '放假', 'Wednesday': '游2K', 'Thursday': '訓練台60分', 'Friday': '跑10 K', 'Saturday': '放假', 'Sunday': '水月公園團騎75K，再跑3K。' },
+            // 第6週
+            { 'Monday': '放假', 'Tuesday': '游2.5K', 'Wednesday': '訓練台70分', 'Thursday': '跑12 K', 'Friday': '游2.5K', 'Saturday': '水月公園團騎75K，再跑3K。', 'Sunday': '水月公園團騎75K，再跑3K。' },
+            // 第7週
+            { 'Monday': '放假', 'Tuesday': '游2.5K', 'Wednesday': '訓練台70分', 'Thursday': '訓練台70分', 'Friday': '游2K', 'Saturday': '水月公園團騎75K，再跑3K。', 'Sunday': '跑12 K' },
+            // 第8週
+            { 'Monday': '放假', 'Tuesday': '游2.5K', 'Wednesday': '跑10 K', 'Thursday': '訓練台70分', 'Friday': '游2.5K', 'Saturday': '水月公園團騎75K，再跑3K。', 'Sunday': '訓練台30分，再跑10K。' },
+            // 第9週
+            { 'Monday': '放假', 'Tuesday': '游2K', 'Wednesday': '訓練台60分', 'Thursday': '訓練台60分', 'Friday': '放假', 'Saturday': '訓練台30分，再跑10K。', 'Sunday': '訓練台30分，再跑10K。' },
+            // 第10週
+            { 'Monday': '放假', 'Tuesday': '游2K', 'Wednesday': '訓練台60分', 'Thursday': '跑10 K', 'Friday': '游2K', 'Saturday': '水月公園團騎40K，再跑10K。', 'Sunday': '跑12 K' },
+            // 第11週
+            { 'Monday': '放假', 'Tuesday': '游2.5K', 'Wednesday': '訓練台70分', 'Thursday': '跑12 K', 'Friday': '游2K', 'Saturday': '水月公園團騎40K，再跑10K。', 'Sunday': '跑12 K' },
+            // 第12週
+            { 'Monday': '放假', 'Tuesday': '游2.5K', 'Wednesday': '訓練台70分', 'Thursday': '跑12 K', 'Friday': '游2K', 'Saturday': '水月公園團騎70K，再跑5 K。', 'Sunday': '跑12 K' },
+            // 第13週
+            { 'Monday': '放假', 'Tuesday': '游1.5K', 'Wednesday': '訓練台60分', 'Thursday': '跑8 K', 'Friday': '游2 K', 'Saturday': '水月公園團騎85K', 'Sunday': '跑12 K' },
+            // 第14週
+            { 'Monday': '放假', 'Tuesday': '游3K', 'Wednesday': '訓練台70分', 'Thursday': '跑12 K', 'Friday': '游2K', 'Saturday': '水月公園團騎85K', 'Sunday': '水月公園團騎85K' },
+            // 第15週
+            { 'Monday': '放假', 'Tuesday': '游3K', 'Wednesday': '訓練台70分', 'Thursday': '跑12 K', 'Friday': '游2K', 'Saturday': '水月公園團騎85K', 'Sunday': '跑12 K' },
+            // 第16週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '跑12 K', 'Friday': '游2K', 'Saturday': '水月公園團騎85K。', 'Sunday': '跑15 k' },
+            // 第17週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台60分', 'Thursday': '跑12 K', 'Friday': '游2K', 'Saturday': '水月公園團騎85K。', 'Sunday': '跑15 k' },
+            // 第18週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '放假', 'Thursday': '訓練台90分', 'Friday': '跑12 K', 'Saturday': '訓練台60分，再跑10 K。', 'Sunday': '訓練台60分，再跑10 K。' },
+            // 第19週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '跑10 K', 'Friday': '放假', 'Saturday': '訓練台60分，再跑10 K。', 'Sunday': '訓練台60分，再跑10 K。' },
+            // 第20週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '跑12 K', 'Friday': '跑12 K', 'Saturday': '訓練台70分，再跑10 K。', 'Sunday': '訓練台70分，再跑10 K。' },
+            // 第21週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '訓練台90分', 'Friday': '跑12 K', 'Saturday': '跑12 K', 'Sunday': '訓練台60分，再跑10 K。' },
+            // 第22週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '跑12 K', 'Friday': '訓練台90分', 'Saturday': '訓練台60分，再跑10 K。', 'Sunday': '訓練台60分，再跑10 K。' },
+            // 第23週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '訓練台60分，再跑10 K。', 'Friday': '游3K', 'Saturday': '水月公園團騎86 k，再跑5 K。', 'Sunday': '水月公園團騎86 k，再跑5 K。' },
+            // 第24週
+            { 'Monday': '放假。', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '訓練台90分', 'Friday': '訓練台90分', 'Saturday': '水月公園團騎86 k，再跑5 K。', 'Sunday': '水月公園團騎86 k，再跑5 K。' },
+            // 第25週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '跑12K', 'Friday': '跑12K', 'Saturday': '訓練台90分，再跑6K。', 'Sunday': '訓練台90分，再跑6K。' },
+            // 第26週
+            { 'Monday': '放假', 'Tuesday': '游3.8K', 'Wednesday': '訓練台90分', 'Thursday': '跑10 K', 'Friday': '游3.8K', 'Saturday': '水月公園團騎86 k，再跑5 K。', 'Sunday': '訓練台90分，再跑10 k' },
+            // 第27週
+            { 'Monday': '放假', 'Tuesday': '游3K', 'Wednesday': '訓練台60分', 'Thursday': '跑10 K', 'Friday': '游2.5K', 'Saturday': '訓練台90分，再跑6K。', 'Sunday': '訓練台90分，再跑6K。' },
+            // 第28週
+            { 'Monday': '放假', 'Tuesday': '訓練台60分', 'Wednesday': '訓練台60分', 'Thursday': '跑10 K', 'Friday': '游3K', 'Saturday': '水月公園團騎86 k，再跑5 K。', 'Sunday': '水月公園團騎86 k，再跑5 K。' },
+            // 第29週
+            { 'Monday': '放假', 'Tuesday': '訓練台60分', 'Wednesday': '跑10 K', 'Thursday': '訓練台90分', 'Friday': '游2K', 'Saturday': '水月公園團騎86 k，再跑5 K。', 'Sunday': '跑15K' },
+            // 第30週
+            { 'Monday': '放假', 'Tuesday': '訓練台60分', 'Wednesday': '跑10 K', 'Thursday': '訓練台90分', 'Friday': '游3K', 'Saturday': '水月公園團騎86 k，再跑5 K。', 'Sunday': '跑18K' },
+            // 第31週
+            { 'Monday': '放假', 'Tuesday': '訓練台90分', 'Wednesday': '跑13K', 'Thursday': '訓練台90分', 'Friday': '游3K', 'Saturday': '水月公園團騎86 k，再跑5 K。', 'Sunday': '跑18K' },
+            // 第32週
+            { 'Monday': '放假', 'Tuesday': '游3K', 'Wednesday': '訓練台90分', 'Thursday': '跑15K', 'Friday': '訓練台90分', 'Saturday': '游3.8K', 'Sunday': '水月公園團騎86 k，再跑5 K。' },
+            // 第33週
+            { 'Monday': '放假', 'Tuesday': '游3K', 'Wednesday': '訓練台90分', 'Thursday': '跑15K', 'Friday': '游3.8K', 'Saturday': '水月公園團騎86 k，再跑5 K。', 'Sunday': '水月公園團騎86 k，再跑5 K。' },
+            // 第34週
+            { 'Monday': '游3.8K', 'Tuesday': '訓練台60分', 'Wednesday': '跑10K（早上七點前要完成。）', 'Thursday': '放假', 'Friday': '放假', 'Saturday': 'CT226', 'Sunday': '放假' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // ====== DOM 元素初始化 ======
+            const currentScheduleDiv = document.getElementById('currentScheduleDiv');
+            const countdownInline = document.getElementById('countdownInline');
+            const modalScheduleTypeSelect = document.getElementById('modalScheduleTypeSelect');
+            const modalDistanceSelect = document.getElementById('modalDistanceSelect');
+            const modalLevelSelect = document.getElementById('modalLevelSelect');
+            const levelIntro = document.getElementById('levelIntro');
+            const scheduleModal = document.getElementById('scheduleModal');
+            const scheduleForm = document.getElementById('scheduleForm');
+            const scheduleError = document.getElementById('scheduleError');
+            const addScheduleBtn = document.getElementById('addScheduleBtn');
+            const cancelScheduleBtn = document.getElementById('cancelScheduleBtn');
+            const todayTraining = document.getElementById('todayTraining');
+
+            // ====== 從雲端載入最新資料 ======
+            const currentUserId = localStorage.getItem('currentUser');
+            const currentToken = localStorage.getItem('token');
+            
+            if (currentUserId && currentToken) {
+                try {
+                    const res = await fetch(`/api/user-data/${currentUserId}`, {
+                        headers: { 'Authorization': `Bearer ${currentToken}` }
+                    });
+                    if (res.ok) {
+                        const result = await res.json();
+                        let cloudData = result.data || {};
+                        
+                        // 更新 localStorage 中的資料
+                        Object.keys(cloudData).forEach(key => {
+                            setUserData(key, cloudData[key]);
+                        });
+                        
+                        console.log('已從雲端載入最新資料');
+                    }
+                } catch (error) {
+                    console.error('載入雲端資料失敗:', error);
+                }
+            }
+
+            // 頁面載入時立即刷新今日課表
+            if (todayTraining) todayTraining.textContent = getTodayScheduleFixed();
+
+            // ====== 課表等級介紹 ======
+            const levelIntroMap = {
+                '軟腳蝦': `
+                    <div class='level-card level-shrimp'>
+                        <div class='level-icon'><img src="images/shrimp.png" alt="軟腳蝦" style="width:48px;height:48px;object-fit:cover;border-radius:50%;background:#222;box-shadow:0 2px 8px #00bcd4cc,0 0 0 2px #fff;"></div>
+                        <div class='level-title' style="color:#00bcd4;font-size:18px;font-weight:700;letter-spacing:2px;">軟腳蝦</div>
+                        <div class='level-desc'>泳帽戴反、呼吸換氣還會嗆到水<br>騎 10 公里開始懷疑坐墊是不是反人類設計<br>還剩 7 公里，開始每 500 公尺就想登出一次</div>
+                    </div>
+                `,
+                '滑水鴨': `
+                    <div class='level-card level-duck'>
+                        <div class='level-icon'><img src="images/duck.png" alt="滑水鴨" style="width:48px;height:48px;object-fit:cover;border-radius:50%;background:#222;box-shadow:0 2px 8px #ffd600cc,0 0 0 2px #fff;"></div>
+                        <div class='level-title' style="color:#ffd600;font-size:18px;font-weight:700;letter-spacing:2px;">滑水鴨</div>
+                        <div class='level-desc'>會做暖身，會拉筋，下水還是先喝兩口 <br>騎車有速度感，但總在轉換區找不到單車<br>學會配速，大熱天就爆，太冷也爆，剛好也爆</div>
+                    </div>
+                `,
+                '老鳥': `
+                    <div class='level-card level-bird'>
+                        <div class='level-icon'><img src="images/eagle.png" alt="老鳥" style="width:48px;height:48px;object-fit:cover;border-radius:50%;background:#222;box-shadow:0 2px 8px #ff5252cc,0 0 0 2px #fff;"></div>
+                        <div class='level-title' style="color:#ff5252;font-size:18px;font-weight:700;letter-spacing:2px;">老鳥</div>
+                        <div class='level-desc'>抬頭定位比 GPS 還準，還能幫隔壁選手導航<br>沒裝坐墊騎單車上武嶺<br>跑步跑錯路多繞一圈，結果還上凸台</div>
+                    </div>
+                `
+            };
+
+            // ====== 通用帳號專屬 localStorage 存取 ======
+            function getUserKey(key) {
+                const user = localStorage.getItem('currentUser');
+                return user ? `${key}_${user}` : key;
+            }
+            function setUserData(key, value) {
+                localStorage.setItem(getUserKey(key), JSON.stringify(value));
+            }
+            function getUserData(key, fallback = null) {
+                const val = localStorage.getItem(getUserKey(key));
+                if (!val) return fallback;
+                try { return JSON.parse(val); } catch { return fallback; }
+            }
+
+            // ====== 取得帳號專屬課表設定 ======
+            function getSelectedSchedule(type) {
+                return getUserData(type, '');
+            }
+
+            // 在適當位置新增 getOriginalScheduleContent 輔助函數
+            function getOriginalScheduleContent(weekIdx, dayKey) {
+                // 根據目前選擇的課表類型與等級取得原始課表內容
+                const typeSel = getSelectedSchedule('selectedScheduleType');
+                const distSel = getSelectedSchedule('selectedScheduleDistance');
+                const levelSel = getSelectedSchedule('selectedScheduleLevel');
+                let base = [];
+                if ((typeSel === 'Challenge Taiwan' && distSel === '113') || (typeSel === 'Ironman' && distSel === '113') || (typeSel === 'LAVA 完賽樂園' && distSel === '113')) {
+                    if (levelSel === '軟腳蝦') base = schedule_113_shrimp;
+                    else if (levelSel === '老鳥') base = schedule_113_eagle;
+                } else if (typeSel === 'Challenge Taiwan' && distSel === '226' && levelSel === '滑水鴨') {
+                    base = schedule_226_duck;
+                }
+                if (base[weekIdx] && base[weekIdx][dayKey] !== undefined) return base[weekIdx][dayKey];
+                return null;
+            }
+            async function saveSelectedSchedule(type, distance, level) {
+                setUserData('selectedScheduleType', type);
+                setUserData('selectedScheduleDistance', distance);
+                setUserData('selectedScheduleLevel', level || '');
+                if ((type === 'Challenge Taiwan' && distance === '113') || (type === 'Ironman' && distance === '113') || (type === 'LAVA 完賽樂園' && distance === '113')) {
+                    if (level === '軟腳蝦') {
+                        setUserData('schedules', schedule_113_shrimp);
+                    } else if (level === '老鳥') {
+                        setUserData('schedules', schedule_113_eagle);
+                    } else {
+                        setUserData('schedules', []);
+                    }
+                } else if (distance === '226') {
+                    if (level === '滑水鴨') {
+                        setUserData('schedules', schedule_226_duck);
+                    } else {
+                        setUserData('schedules', []);
+                    }
+                } else {
+                    setUserData('schedules', []);
+                }
+                // 直接同步到 API
+                const userId = localStorage.getItem('currentUser');
+                const token = localStorage.getItem('token');
+                if (userId && token) await syncToCloud();
+            }
+            function getUserSchedules() {
+                return getUserData('schedules', []);
+            }
+
+            // ====== 雲端同步 API ======
+            async function syncToCloud() {
+                const userId = localStorage.getItem('currentUser');
+                const token = localStorage.getItem('token');
+                if (!userId || !token) return;
+                
+                try {
+                    // 先從伺服器獲取現有數據
+                    const response = await fetch(`/api/user-data/${userId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    let existingData = {};
+                    if (response.ok) {
+                        const result = await response.json();
+                        existingData = result.data || {};
+                    }
+                    
+                    // 只更新需要同步的字段，保留其他數據（如個人資料）
+                    const updatedData = {
+                        ...existingData,
+                        trainingGoals: getUserData('trainingGoals', []),
+                        calendarEvents: getUserData('calendarEvents', {}),
+                        schedules: getUserData('schedules', []),
+                        todaySchedule: getUserData('todaySchedule', ''),
+                        selectedScheduleType: getUserData('selectedScheduleType', null),
+                        selectedScheduleDistance: getUserData('selectedScheduleDistance', null),
+                        selectedScheduleLevel: getUserData('selectedScheduleLevel', null),
+                        profile: getUserData('profile', {})
+                    };
+                    
+                    await fetch(`/api/user-data/${userId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ data: updatedData })
+                    });
+                } catch (error) {
+                    console.error('同步到雲端失敗:', error);
+                }
+            }
+
+            // ====== 從伺服器取得資料 ======
+            async function fetchCloudData(userId, token) {
+                const res = await fetch(`/api/user-data/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const { data } = await res.json();
+                    Object.keys(data).forEach(key => {
+                        setUserData(key, data[key]);
+                    });
+                    // 更新 UI
+                    renderCurrentSchedule();
+                    if (document.getElementById('goalsList')) renderGoals();
+                    if (todayTraining) todayTraining.textContent = getTodayScheduleFixed();
+                }
+            }
+
+            // ====== 顯示已選擇內容 ======
+            function renderCurrentSchedule() {
+                if (!currentScheduleDiv) return;
+                const selectedSchedule = getSelectedSchedule('selectedScheduleType');
+                const selectedDistance = getSelectedSchedule('selectedScheduleDistance');
+                const selectedLevel = getSelectedSchedule('selectedScheduleLevel');
+                let html = '';
+                if (selectedSchedule && selectedDistance) {
+                    html = `<span style='font-size:17px;color:#fff;'>已選擇:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedSchedule} / ${selectedDistance}</span>`;
+                } else if (selectedSchedule) {
+                    html = `<span style='font-size:17px;color:#fff;'>已選擇:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedSchedule}</span>`;
+                } else if (selectedDistance) {
+                    html = `<span style='font-size:17px;color:#fff;'>已選擇距離:</span> <span style='font-size:17px;color:#00bcd4;font-weight:600;'>${selectedDistance}</span>`;
+                } else {
+                    html = '<span style="font-size:17px;color:#fff;">尚未選擇課表</span>';
+                }
+                if (selectedLevel) {
+                    let levelImg = '';
+                    let levelAlt = '';
+                    let levelColor = '';
+                    let levelShadow = '';
+                    if (selectedLevel === '軟腳蝦') {
+                        levelImg = 'images/shrimp.png';
+                        levelAlt = '軟腳蝦';
+                        levelColor = '#00bcd4';
+                        levelShadow = '0 2px 8px #00bcd4cc,0 0 0 4px #fff';
+                    } else if (selectedLevel === '滑水鴨') {
+                        levelImg = 'images/duck.png';
+                        levelAlt = '滑水鴨';
+                        levelColor = '#ffd600';
+                        levelShadow = '0 2px 8px #ffd600cc,0 0 0 4px #fff';
+                    } else if (selectedLevel === '老鳥') {
+                        levelImg = 'images/eagle.png';
+                        levelAlt = '老鳥';
+                        levelColor = '#ff5252';
+                        levelShadow = '0 2px 8px #ff5252cc,0 0 0 4px #fff';
+                    }
+                    html += `<div style='margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:6px;'>
+                        <div style='color:#fff;font-size:13px;font-weight:600;margin-bottom:2px;'>課表等級</div>
+                        <img src='${levelImg}' alt='${levelAlt}' style='width:64px;height:64px;object-fit:cover;border-radius:50%;box-shadow:${levelShadow};background:#222;'/>
+                        <div style='font-size:15px;color:${levelColor};font-weight:600;letter-spacing:2px;'>${selectedLevel}</div>
+                    </div>`;
+                }
+                currentScheduleDiv.innerHTML = html;
+                renderCountdownInline();
+            }
+
+            // ====== 課表選擇相關功能 ======
+            function openScheduleModal() {
+                if (!scheduleModal) return;
+                scheduleModal.style.display = 'flex';
+                setTimeout(()=>{scheduleModal.style.opacity = 1;}, 10);
+                scheduleError.textContent = '';
+                modalScheduleTypeSelect.value = getSelectedSchedule('selectedScheduleType');
+                updateDistanceOptions();
+                modalDistanceSelect.value = getSelectedSchedule('selectedScheduleDistance');
+                modalLevelSelect.value = getSelectedSchedule('selectedScheduleLevel');
+                if (levelIntro) levelIntro.innerHTML = modalLevelSelect.value ? (levelIntroMap[modalLevelSelect.value] || '') : '';
+                modalScheduleTypeSelect.focus();
+            }
+
+            function closeScheduleModal() {
+                if (!scheduleModal) return;
+                scheduleModal.style.opacity = 0;
+                setTimeout(()=>{scheduleModal.style.display = 'none';}, 200);
+                scheduleForm.reset();
+                scheduleError.textContent = '';
+            }
+
+            // ====== 根據課表類型動態更新距離選項 ======
+            function updateDistanceOptions() {
+                if (!modalScheduleTypeSelect || !modalDistanceSelect) return;
+                const type = modalScheduleTypeSelect.value;
+                let options = '<option value="">請選擇距離</option>';
+                if (type === 'Challenge Taiwan') {
+                    options += '<option value="113">113</option><option value="226">226</option>';
+                } else if (type === 'Ironman') {
+                    options += '<option value="113">113</option>';
+                } else if (type === 'LAVA 完賽樂園') {
+                    options += '<option value="113">113</option>';
+                }
+                modalDistanceSelect.innerHTML = options;
+                modalDistanceSelect.value = '';
+            }
+
+            // ====== 統一倒數天數邏輯 ======
+            function getScheduleStartDateAndDaysLeft() {
+                // 取得賽事日與 offsetDays
+                let raceDate = null, offsetDays = 236;
+                const type = getSelectedSchedule('selectedScheduleType');
+                const distance = getSelectedSchedule('selectedScheduleDistance');
+                if (type === 'Challenge Taiwan' && distance === '226') {
+                    raceDate = new Date(2026, 3, 25);
+                    offsetDays = 236;
+                } else if ((type === 'Ironman' && distance === '113') || (type === 'LAVA 完賽樂園' && distance === '113') || (type === 'Challenge Taiwan' && distance === '113')) {
+                    if(type === 'Ironman') {
+                        raceDate = new Date(2025, 10, 2);
+                        offsetDays = 167;
+                    } else if(type === 'LAVA 完賽樂園') {
+                        raceDate = new Date(2026, 2, 14);
+                        offsetDays = 167;
+                    } else if(type === 'Challenge Taiwan') {
+                        raceDate = new Date(2026, 3, 25);
+                        offsetDays = 167;
+                    }
+                }
+                if (!raceDate) return {startDate: null, daysLeft: null};
+                const startDate = new Date(raceDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+                const now = new Date();
+                const daysLeft = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+                return {startDate, daysLeft};
+            }
+
+            // 修改所有倒數顯示 function
+            function renderCountdownInline() {
+                if (!countdownInline) return;
+                const {startDate, daysLeft} = getScheduleStartDateAndDaysLeft();
+                if (!startDate) {
+                    countdownInline.style.display = 'none';
+                    if(window.countdownInlineTimer) clearInterval(window.countdownInlineTimer);
+                    return;
+                }
+                const now = new Date();
+                if(now < startDate) {
+                    countdownInline.style.display = '';
+                    countdownInline.innerHTML = `<span style='font-size:40px;font-weight:900;color:#00bcd4;'>${daysLeft}</span><span style='font-size:20px;color:#b0bec5;font-weight:500;'> 天</span><div style='font-size:15px;color:#b0bec5;margin-top:2px;'>距離課表開始還有 ${daysLeft} 天！</div>`;
+                    return;
+                }
+                // 課表已開始，顯示進度
+                const schedules = getUserSchedules();
+                const daysSinceStart = Math.floor((now - startDate)/(1000*60*60*24));
+                let weekIdx = Math.floor(daysSinceStart/7);
+                if(weekIdx >= schedules.length) weekIdx = schedules.length-1;
+                countdownInline.style.display = '';
+                countdownInline.innerHTML = `<span style='font-size:22px;color:#00bcd4;font-weight:700;'>課表已開始！</span><div style='font-size:16px;color:#b0bec5;margin-top:6px;'>目前進度：第${weekIdx+1}週</div>`;
+            }
+
+            function updateCountdownInline() {
+                renderCountdownInline();
+            }
+
+            // 修改 getTodayScheduleFixed 也用統一邏輯
+            function getTodayScheduleFixed() {
+                const schedules = getUserSchedules();
+                const {startDate, daysLeft} = getScheduleStartDateAndDaysLeft();
+                if (!startDate) return '尚未選擇課表';
+                const now = new Date();
+                if (now < startDate) {
+                    return `距離課表開始還有 ${daysLeft} 天！`;
+                }
+                // 課表已開始
+                const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+                let weekIdx = Math.floor(daysSinceStart / 7);
+                if (!schedules[weekIdx]) return '今日無課表';
+                const today = new Date();
+                const todayKey = daysOfWeek[today.getDay()];
+                return schedules[weekIdx][todayKey] || '今日無課表';
+            }
+
+            // ====== 事件監聽器設置 ======
+            if (addScheduleBtn) {
+                addScheduleBtn.onclick = openScheduleModal;
+            }
+            if (cancelScheduleBtn) {
+                cancelScheduleBtn.onclick = closeScheduleModal;
+            }
+            if (scheduleModal) {
+                scheduleModal.addEventListener('click', function(e){
+                    if(e.target === this) closeScheduleModal();
+                });
+            }
+            if (modalScheduleTypeSelect) {
+                modalScheduleTypeSelect.addEventListener('change', updateDistanceOptions);
+            }
+            if (scheduleForm) {
+                scheduleForm.onsubmit = function(e) {
+                    e.preventDefault();
+                    const type = modalScheduleTypeSelect.value;
+                    const distance = modalDistanceSelect.value;
+                    const level = modalLevelSelect.value;
+                    if (!type) {
+                        scheduleError.textContent = '請選擇課表';
+                        modalScheduleTypeSelect.focus();
+                        return;
+                    }
+                    if (!distance) {
+                        scheduleError.textContent = '請選擇距離';
+                        modalDistanceSelect.focus();
+                        return;
+                    }
+                    if (!level) {
+                        scheduleError.textContent = '請選擇課表等級';
+                        modalLevelSelect.focus();
+                        return;
+                    }
+                    saveSelectedSchedule(type, distance, level);
+                    if (localStorage.getItem('token')) syncToCloud();
+                    renderCurrentSchedule();
+                    if (todayTraining) todayTraining.textContent = getTodayScheduleFixed();
+                    closeScheduleModal();
+                    // 在賽事編輯（goalForm.onsubmit）最後加：
+                    syncAllGoalsToSchedule();
+                };
+            }
+
+            // ====== 頁面載入時初始化 ======
+            renderCurrentSchedule();
+            if (modalScheduleTypeSelect) {
+                updateDistanceOptions();
+            }
+
+            // ====== 首次載入時從雲端同步資料 ======
+            const userId = localStorage.getItem('currentUser');
+            const token = localStorage.getItem('token');
+            if (userId && token) {
+                fetchCloudData(userId, token);
+            }
+
+            // 導航列激活狀態由 nav.js 統一處理
+
+            // 導航列事件由 nav.js 統一處理
+
+            // 頁面載入時載入目標
+            renderGoals();
+            renderCurrentSchedule();
+
+            // ====== 目標賽事功能（優化） ======
+            function getGoals() {
+                const data = getUserData('trainingGoals', []);
+                return Array.isArray(data) ? data : [];
+            }
+            async function saveGoals(goals) {
+                setUserData('trainingGoals', goals);
+                
+                // 直接同步到 API
+                const userId = localStorage.getItem('currentUser');
+                const token = localStorage.getItem('token');
+                if (userId && token) {
+                    try {
+                        // 先取得雲端現有資料
+                        const res = await fetch(`/api/user-data/${userId}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        let cloudData = {};
+                        if (res.ok) {
+                            const result = await res.json();
+                            cloudData = result.data || {};
+                        }
+                        
+                        // 更新賽事資料
+                        const updatedData = {
+                            ...cloudData,
+                            trainingGoals: goals
+                        };
+                        
+                        // 寫回 API
+                        await fetch(`/api/user-data/${userId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ data: updatedData })
+                        });
+                        
+                        console.log('賽事已同步到雲端');
+                    } catch (error) {
+                        console.error('同步賽事到雲端失敗:', error);
+                    }
+                }
+            }
+            function renderGoals() {
+                let goals = getGoals();
+                if (!Array.isArray(goals)) goals = [];
+                // 依日期排序，最近的在上
+                goals = goals.sort((a, b) => new Date(a.date) - new Date(b.date));
+                const list = document.getElementById('goalsList');
+                if (!goals.length) {
+                    list.innerHTML = '<div style="color:#b0bec5;">尚未設定參加賽事</div>';
+                    return;
+                }
+                list.innerHTML = goals.map((g, idx) => `
+                    <div class="goal-card" data-idx="${idx}">
+                        <div class="goal-title">${g.name}</div>
+                        <div class="goal-meta">${g.type} ・ ${g.distance} km</div>
+                        <div class="goal-meta">${g.date}</div>
+                        <div class="goal-actions">
+                            <button class="goal-action-btn edit-btn" title="編輯">
+                                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.7 2.29a1 1 0 0 1 1.42 0l1.59 1.59a1 1 0 0 1 0 1.42l-9.3 9.3-2.12.71.71-2.12 9.3-9.3zM3 17h14v2H3v-2z" fill="#00bcd4"/></svg>
+                            </button>
+                            <button class="goal-action-btn delete-btn" title="刪除">
+                                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 7v7a1 1 0 0 0 2 0V7a1 1 0 1 0-2 0zm3 0v7a1 1 0 0 0 2 0V7a1 1 0 1 0-2 0zm3 0v7a1 1 0 0 0 2 0V7a1 1 0 1 0-2 0zM4 4V2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2h3v2H1V4h3zm2-2v2h8V2H6z" fill="#b71c1c"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            function openGoalModal(goal, idx) {
+                const modal = document.getElementById('goalModal');
+                modal.style.display = 'flex';
+                setTimeout(()=>{modal.style.opacity = 1;}, 10);
+                document.getElementById('goalName').value = goal ? goal.name : '';
+                document.getElementById('goalDate').value = goal ? goal.date : '';
+                document.getElementById('goalType').value = goal ? goal.type : '鐵人三項';
+                document.getElementById('goalDistance').value = goal ? goal.distance : '';
+                document.getElementById('goalForm').setAttribute('data-edit-idx', idx !== undefined ? idx : '');
+                document.getElementById('goalName').focus();
+                document.getElementById('goalError').textContent = '';
+            }
+            function closeGoalModal() {
+                const modal = document.getElementById('goalModal');
+                modal.style.opacity = 0;
+                setTimeout(()=>{modal.style.display = 'none';}, 200);
+                document.getElementById('goalForm').reset();
+                document.getElementById('goalForm').removeAttribute('data-edit-idx');
+                document.getElementById('goalError').textContent = '';
+            }
+            document.getElementById('goalsList').onclick = function(e) {
+                const card = e.target.closest('.goal-card');
+                if (!card) return;
+                const idx = card.getAttribute('data-idx');
+                if (e.target.closest('.edit-btn')) {
+                    // 編輯目標賽事
+                    const goals = getGoals();
+                    openGoalModal(goals[idx], idx);
+                }
+                if (e.target.closest('.delete-btn')) {
+                    if (!confirm('確定要刪除這個目標嗎？')) return;
+                    let goals = getGoals();
+                    // 取得要刪除的目標
+                    const goal = goals[idx];
+                    // 刪除日曆的Event（確保同名同日的Event都刪除）
+                    const date = goal.date;
+                    const name = goal.name;
+                    let calendarEvents = getUserData('calendarEvents', {});
+                    if (calendarEvents[date]) {
+                        calendarEvents[date] = calendarEvents[date].filter(ev => !(ev.type === 'Event' && ev.name === name));
+                        if (calendarEvents[date].length === 0) delete calendarEvents[date];
+                        setUserData('calendarEvents', calendarEvents);
+                    }
+                    // 刪除目標
+                    goals.splice(idx, 1);
+                    saveGoals(goals);
+                    renderGoals();
+                    // 在賽事刪除（goalsList.onclick 刪除目標後）加：
+                    syncAllGoalsToSchedule();
+                }
+            };
+            const addGoalBtn = document.getElementById('addGoalBtn');
+            if (addGoalBtn) {
+                addGoalBtn.onclick = () => openGoalModal();
+            }
+            const cancelGoalBtn = document.getElementById('cancelGoalBtn');
+            if (cancelGoalBtn) {
+                cancelGoalBtn.onclick = closeGoalModal;
+            }
+            // 點擊遮罩關閉
+            document.getElementById('goalModal').addEventListener('click', function(e){
+                if(e.target === this) closeGoalModal();
+            });
+            // ESC 關閉
+            document.addEventListener('keydown', function(e){
+                if(e.key === 'Escape') closeGoalModal();
+            });
+            document.getElementById('goalForm').onsubmit = function(e) {
+                e.preventDefault();
+                const name = document.getElementById('goalName').value.trim();
+                const date = document.getElementById('goalDate').value;
+                const type = document.getElementById('goalType').value;
+                const distance = parseFloat(document.getElementById('goalDistance').value);
+                const errorDiv = document.getElementById('goalError');
+                errorDiv.textContent = '';
+                if (!name) {
+                    errorDiv.textContent = '請輸入賽事名稱';
+                    document.getElementById('goalName').focus();
+                    return;
+                }
+                if (!date) {
+                    errorDiv.textContent = '請選擇日期';
+                    document.getElementById('goalDate').focus();
+                    return;
+                }
+                if (new Date(date) < new Date(new Date().toISOString().slice(0,10))) {
+                    errorDiv.textContent = '日期不能是過去';
+                    document.getElementById('goalDate').focus();
+                    return;
+                }
+                if (!type) {
+                    errorDiv.textContent = '請選擇活動類型';
+                    document.getElementById('goalType').focus();
+                    return;
+                }
+                if (!distance || distance <= 0) {
+                    errorDiv.textContent = '請輸入有效距離';
+                    document.getElementById('goalDistance').focus();
+                    return;
+                }
+                let goals = getGoals();
+                const editIdx = this.getAttribute('data-edit-idx');
+                const goalObj = { name, date, type, distance };
+                let isEdit = (editIdx !== '' && editIdx !== null);
+                let oldGoal = null;
+                let oldRestBackup = null;
+                if (isEdit) {
+                    oldGoal = goals[Number(editIdx)];
+                    // === 新增：備份舊賽事日前2天原課表 ===
+                    oldRestBackup = [];
+                    const schedules = getUserSchedules();
+                    const typeSel = getSelectedSchedule('selectedScheduleType');
+                    const distSel = getSelectedSchedule('selectedScheduleDistance');
+                    let raceDate = null, offsetDays = 236;
+                    if (typeSel === 'Challenge Taiwan' && distSel === '226') {
+                        raceDate = new Date(2026, 4, 25);
+                        offsetDays = 236;
+                    } else if ((typeSel === 'Ironman' && distSel === '113') || (typeSel === 'LAVA 完賽樂園' && distSel === '113') || (typeSel === 'Challenge Taiwan' && distSel === '113')) {
+                        if(typeSel === 'Ironman') {
+                            raceDate = new Date(2025, 10, 2);
+                            offsetDays = 167;
+                        } else if(typeSel === 'LAVA 完賽樂園') {
+                            raceDate = new Date(2026, 2, 14);
+                            offsetDays = 167;
+                        } else if(typeSel === 'Challenge Taiwan') {
+                            raceDate = new Date(2026, 4, 25);
+                            offsetDays = 167;
+                        }
+                    }
+                    if (raceDate && schedules.length > 0) {
+                        const startDate = new Date(raceDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+                        for (let i = 1; i < 3; i++) {
+                            const d = new Date(oldGoal.date);
+                            d.setDate(d.getDate() - i);
+                            if (d < startDate) continue;
+                            const daysSinceStart = Math.floor((d - startDate) / (1000 * 60 * 60 * 24));
+                            const weekIdx = Math.floor(daysSinceStart / 7);
+                            const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                            const dayKey = daysOfWeek[d.getDay()];
+                            if (weekIdx >= 0 && weekIdx < schedules.length && schedules[weekIdx][dayKey] === '休息日') {
+                                // 只還原被我們覆蓋的休息日
+                                // 取得原始課表內容
+                                const orig = getOriginalScheduleContent(weekIdx, dayKey);
+                                if (orig) schedules[weekIdx][dayKey] = orig;
+                            }
+                        }
+                        setUserData('schedules', schedules);
+                        if (localStorage.getItem('token')) syncToCloud();
+                    }
+                }
+                if (isEdit && oldGoal) {
+                    oldGoal = goalObj;
+                    goals[Number(editIdx)] = oldGoal;
+                } else {
+                    goals.push(goalObj);
+                }
+                saveGoals(goals);
+                renderGoals();
+                closeGoalModal();
+                // 自動匯入日曆頁面
+                let calendarEvents = getUserData('calendarEvents', {});
+                if (isEdit && oldGoal) {
+                    // 先移除舊日期的 Event（只有當日期有變動時才移除舊日期）
+                    if (oldGoal.date !== date && calendarEvents[oldGoal.date]) {
+                        calendarEvents[oldGoal.date] = calendarEvents[oldGoal.date].filter(ev => !(ev.type === 'Event' && ev.name === oldGoal.name));
+                        if (calendarEvents[oldGoal.date].length === 0) delete calendarEvents[oldGoal.date];
+                    }
+                    // 新日期先移除同名 Event，避免重複
+                    calendarEvents[date] = (calendarEvents[date] || []).filter(ev => !(ev.type === 'Event' && ev.name === name));
+                } else {
+                    calendarEvents[date] = (calendarEvents[date] || []).filter(ev => !(ev.type === 'Event' && ev.name === name));
+                }
+                calendarEvents[date].push({ type: 'Event', name: name, distance: distance, eventType: type });
+                setUserData('calendarEvents', calendarEvents);
+                // === 新增：自動將所有賽事日前2天課表設為休息日，賽事日顯示賽事名稱及距離 ===
+                // 先還原所有課表為原始內容
+                let schedules = getUserSchedules();
+                const typeSel = getSelectedSchedule('selectedScheduleType');
+                const distSel = getSelectedSchedule('selectedScheduleDistance');
+                const levelSel = getSelectedSchedule('selectedScheduleLevel');
+                let base = [];
+                if ((typeSel === 'Challenge Taiwan' && distSel === '113') || (typeSel === 'Ironman' && distSel === '113') || (typeSel === 'LAVA 完賽樂園' && distSel === '113')) {
+                    if (levelSel === '軟腳蝦') base = schedule_113_shrimp;
+                    else if (levelSel === '老鳥') base = schedule_113_eagle;
+                } else if (typeSel === 'Challenge Taiwan' && distSel === '226' && levelSel === '滑水鴨') {
+                    base = schedule_226_duck;
+                }
+                // 完全還原
+                for (let w = 0; w < schedules.length; w++) {
+                    for (const dayKey of Object.keys(schedules[w])) {
+                        if (base[w] && base[w][dayKey] !== undefined) schedules[w][dayKey] = base[w][dayKey];
+                    }
+                }
+                // 取得所有賽事
+                const allGoals = getGoals();
+                // 依每個賽事，設置賽事日與前2天
+                let raceDate = null, offsetDays = 236;
+                if (typeSel === 'Challenge Taiwan' && distSel === '226') {
+                    raceDate = new Date(2026, 4, 25);
+                    offsetDays = 236;
+                } else if ((typeSel === 'Ironman' && distSel === '113') || (typeSel === 'LAVA 完賽樂園' && distSel === '113') || (typeSel === 'Challenge Taiwan' && distSel === '113')) {
+                    if(typeSel === 'Ironman') {
+                        raceDate = new Date(2025, 10, 2);
+                        offsetDays = 167;
+                    } else if(typeSel === 'LAVA 完賽樂園') {
+                        raceDate = new Date(2026, 2, 14);
+                        offsetDays = 167;
+                    } else if(typeSel === 'Challenge Taiwan') {
+                        raceDate = new Date(2026, 4, 25);
+                        offsetDays = 167;
+                    }
+                }
+                if (raceDate && schedules.length > 0) {
+                    const startDate = new Date(raceDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+                    // 先將所有賽事依日期排序，確保較晚的賽事覆蓋較早的
+                    allGoals.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    // 建立一個map記錄每一天的賽事（只保留最後一個）
+                    const eventMap = {};
+                    allGoals.forEach(goal => {
+                        eventMap[goal.date] = goal;
+                    });
+                    // 依每個賽事，設置賽事日與前2天
+                    Object.values(eventMap).forEach(goal => {
+                        for (let i = 0; i < 3; i++) {
+                            const d = new Date(goal.date);
+                            d.setDate(d.getDate() - i);
+                            if (d < startDate) continue;
+                            const daysSinceStart = Math.floor((d - startDate) / (1000 * 60 * 60 * 24));
+                            const weekIdx = Math.floor(daysSinceStart / 7);
+                            const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                            const dayKey = daysOfWeek[d.getDay()];
+                            if (weekIdx >= 0 && weekIdx < schedules.length && schedules[weekIdx][dayKey] !== undefined) {
+                                if (i === 0) {
+                                    schedules[weekIdx][dayKey] = goal.name + (goal.distance ? ` (${goal.distance}K)` : '');
+                                } else {
+                                    // 只有當這天不是其他賽事日才設為休息日
+                                    const dStr = d.toISOString().slice(0,10);
+                                    if (!eventMap[dStr]) {
+                                        schedules[weekIdx][dayKey] = '休息日';
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    setUserData('schedules', schedules);
+                    if (localStorage.getItem('token')) syncToCloud();
+                }
+            };
+            // 保證 syncFromCloud 已定義，避免 ReferenceError
+            if (typeof syncFromCloud === 'undefined') {
+                async function syncFromCloud() {}
+            }
+            // 頁面載入時載入目標
+            renderGoals();
+
+            // ----------- 補齊舊有日曆 Event 的 eventType 欄位 -----------
+            function patchOldCalendarEvents() {
+                const currentUser = localStorage.getItem('currentUser');
+                let calendarEvents = {};
+                if (currentUser) {
+                    calendarEvents = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+                } else {
+                    calendarEvents = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+                }
+                const goals = getGoals();
+                // 建立目標賽事查詢表（依日期+名稱）
+                const goalMap = {};
+                goals.forEach(g => {
+                    goalMap[`${g.date}__${g.name}`] = g.type;
+                });
+                let patched = false;
+                Object.keys(calendarEvents).forEach(date => {
+                    calendarEvents[date].forEach(ev => {
+                        if (ev.type === 'Event' && !ev.eventType) {
+                            // 依照日期+名稱找 type
+                            ev.eventType = goalMap[`${date}__${ev.name}`] || '';
+                            patched = true;
+                        }
+                    });
+                });
+                if (patched) {
+                    if (currentUser) {
+                        localStorage.setItem(`calendarEvents_${currentUser}`, JSON.stringify(calendarEvents));
+                    } else {
+                        localStorage.setItem('calendarEvents', JSON.stringify(calendarEvents));
+                    }
+                }
+            }
+            patchOldCalendarEvents();
+
+            // 彈窗動畫與錯誤提示樣式
+            const modal = document.getElementById('goalModal');
+            modal.style.transition = 'opacity 0.2s';
+            modal.style.opacity = 0;
+
+            // ====== 選擇課表功能 ======
+            if (modalLevelSelect) {
+                modalLevelSelect.addEventListener('change', function() {
+                    const val = modalLevelSelect.value;
+                    console.log('Level changed:', val, levelIntroMap[val]);
+                    if (levelIntro) levelIntro.innerHTML = val ? (levelIntroMap[val] || '') : '';
+                });
+            }
+            // 載入時自動顯示已選等級介紹
+            if (modalLevelSelect && levelIntro) {
+                modalLevelSelect.value = getSelectedSchedule('selectedScheduleLevel') || '';
+                levelIntro.innerHTML = modalLevelSelect.value ? (levelIntroMap[modalLevelSelect.value] || '') : '';
+            }
+
+            // 新增：根據課表類型動態更新距離選項
+            function updateDistanceOptions() {
+                const type = modalScheduleTypeSelect.value;
+                let options = '<option value="">請選擇距離</option>';
+                if (type === 'Challenge Taiwan') {
+                    options += '<option value="113">113</option><option value="226">226</option>';
+                } else if (type === 'Ironman') {
+                    options += '<option value="113">113</option>';
+                } else if (type === 'LAVA 完賽樂園') {
+                    options += '<option value="113">113</option>';
+                }
+                modalDistanceSelect.innerHTML = options;
+                modalDistanceSelect.value = '';
+            }
+            modalScheduleTypeSelect.addEventListener('change', updateDistanceOptions);
+            // 預設載入時也要呼叫一次
+            updateDistanceOptions();
+
+            function getCurrentWeekIndexFixed() {
+                const type = getSelectedSchedule('selectedScheduleType');
+                const distance = getSelectedSchedule('selectedScheduleDistance');
+                let raceDate = null, offsetDays = 236;
+                if (type === 'Challenge Taiwan' && distance === '226') {
+                    raceDate = new Date(2026, 4, 25);
+                    offsetDays = 236;
+                } else if ((type === 'Ironman' && distance === '113') || (type === 'LAVA 完賽樂園' && distance === '113') || (type === 'Challenge Taiwan' && distance === '113')) {
+                    if(type === 'Ironman') {
+                        raceDate = new Date(2025, 10, 2);
+                        offsetDays = 167;
+                    } else if(type === 'LAVA 完賽樂園') {
+                        raceDate = new Date(2026, 2, 14);
+                        offsetDays = 167;
+                    } else if(type === 'Challenge Taiwan') {
+                        raceDate = new Date(2026, 4, 25);
+                        offsetDays = 167;
+                    }
+                }
+                if (!raceDate) return 0;
+                const startDate = new Date(raceDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+                const now = new Date();
+                if (now < startDate) return 0;
+                const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+                const schedules = getUserSchedules();
+                let weekIdx = Math.floor(daysSinceStart / 7);
+                if (weekIdx >= schedules.length) weekIdx = schedules.length - 1;
+                return weekIdx;
+            }
+            // 修改本週課表顯示邏輯，使用 getCurrentWeekIndexFixed
+            function getWeeklyScheduleFixed() {
+                const schedules = getUserSchedules();
+                const weekIdx = getCurrentWeekIndexFixed();
+                const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                if (!schedules[weekIdx]) return '本週課表無資料';
+                return daysOfWeek.map(day => `${day}: ${schedules[weekIdx][day] || 'No training'}`).join('\n');
+            }
+            // 你原本顯示本週課表的地方，請改用 getWeeklyScheduleFixed
+            // 例如：
+            // document.getElementById('weeklySchedule').textContent = getWeeklyScheduleFixed();
+
+            // 強化所有 todayTraining.textContent 操作
+            function updateTodayTrainingCard() {
+                const todayTraining = document.getElementById('todayTraining');
+                if (todayTraining) todayTraining.textContent = getTodayScheduleFixed();
+            }
+
+            // 新增：頁面回到可見時自動刷新今日課表
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    updateTodayTrainingCard();
+                }
+            });
+
+            function updateLevelOptions() {
+                if (!modalDistanceSelect || !modalLevelSelect) return;
+                const distance = modalDistanceSelect.value;
+                let options = '<option value="">請選擇等級</option>';
+                if (distance === '113') {
+                    options += '<option value="軟腳蝦">軟腳蝦</option>';
+                    // 若有 duck 課表可加上
+                    // options += '<option value="滑水鴨">滑水鴨</option>';
+                    options += '<option value="老鳥">老鳥</option>';
+                } else if (distance === '226') {
+                    options += '<option value="滑水鴨">滑水鴨</option>';
+                }
+                modalLevelSelect.innerHTML = options;
+                modalLevelSelect.value = '';
+                if (levelIntro) levelIntro.innerHTML = '';
+            }
+            // ... existing code ...
+            if (modalDistanceSelect) {
+                modalDistanceSelect.addEventListener('change', updateLevelOptions);
+            }
+            // ... existing code ...
+
+            // 新增：同步所有賽事對課表的休息日與賽事日覆蓋
+            function syncAllGoalsToSchedule() {
+                let schedules = getUserSchedules();
+                const typeSel = getSelectedSchedule('selectedScheduleType');
+                const distSel = getSelectedSchedule('selectedScheduleDistance');
+                const levelSel = getSelectedSchedule('selectedScheduleLevel');
+                let base = [];
+                if ((typeSel === 'Challenge Taiwan' && distSel === '113') || (typeSel === 'Ironman' && distSel === '113') || (typeSel === 'LAVA 完賽樂園' && distSel === '113')) {
+                    if (levelSel === '軟腳蝦') base = schedule_113_shrimp;
+                    else if (levelSel === '老鳥') base = schedule_113_eagle;
+                } else if (typeSel === 'Challenge Taiwan' && distSel === '226' && levelSel === '滑水鴨') {
+                    base = schedule_226_duck;
+                }
+                // 完全還原
+                for (let w = 0; w < schedules.length; w++) {
+                    for (const dayKey of Object.keys(schedules[w])) {
+                        if (base[w] && base[w][dayKey] !== undefined) schedules[w][dayKey] = base[w][dayKey];
+                    }
+                }
+                // 取得所有賽事
+                const allGoals = getGoals();
+                // 依每個賽事，設置賽事日與前2天
+                let raceDate = null, offsetDays = 236;
+                if (typeSel === 'Challenge Taiwan' && distSel === '226') {
+                    raceDate = new Date(2026, 4, 25);
+                    offsetDays = 236;
+                } else if ((typeSel === 'Ironman' && distSel === '113') || (typeSel === 'LAVA 完賽樂園' && distSel === '113') || (typeSel === 'Challenge Taiwan' && distSel === '113')) {
+                    if(typeSel === 'Ironman') {
+                        raceDate = new Date(2025, 10, 2);
+                        offsetDays = 167;
+                    } else if(typeSel === 'LAVA 完賽樂園') {
+                        raceDate = new Date(2026, 2, 14);
+                        offsetDays = 167;
+                    } else if(typeSel === 'Challenge Taiwan') {
+                        raceDate = new Date(2026, 4, 25);
+                        offsetDays = 167;
+                    }
+                }
+                if (raceDate && schedules.length > 0) {
+                    const startDate = new Date(raceDate.getTime() - offsetDays * 24 * 60 * 60 * 1000);
+                    allGoals.forEach(goal => {
+                        for (let i = 0; i < 3; i++) {
+                            const d = new Date(goal.date);
+                            d.setDate(d.getDate() - i);
+                            if (d < startDate) continue;
+                            const daysSinceStart = Math.floor((d - startDate) / (1000 * 60 * 60 * 24));
+                            const weekIdx = Math.floor(daysSinceStart / 7);
+                            const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                            const dayKey = daysOfWeek[d.getDay()];
+                            if (weekIdx >= 0 && weekIdx < schedules.length && schedules[weekIdx][dayKey] !== undefined) {
+                                if (i === 0) {
+                                    schedules[weekIdx][dayKey] = goal.name + (goal.distance ? ` (${goal.distance}K)` : '');
+                                } else {
+                                    schedules[weekIdx][dayKey] = '休息日';
+                                }
+                            }
+                        }
+                    });
+                    setUserData('schedules', schedules);
+                    if (localStorage.getItem('token')) syncToCloud();
+                }
+            }
+        });
+    </script>
+    <script src="nav.js"></script>
+</body>
+</html> 

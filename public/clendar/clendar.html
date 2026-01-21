@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clandar</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+      background: linear-gradient(135deg, #232526 0%, #414345 100%);
+      position: relative;
+    }
+
+    /* 背景動畫效果 */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(33, 150, 243, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(156, 39, 176, 0.05) 0%, transparent 50%);
+      animation: backgroundFloat 20s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes backgroundFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+    body {
+      width: 100vw;
+      min-height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .calendar-container {
+      width: 100%;
+      max-width: 420px;
+      height: 100dvh;
+      min-height: 0;
+      background: rgba(34, 40, 49, 0.95);
+      border-radius: 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      overflow: hidden;
+      border: 1.5px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top);
+      position: relative;
+    }
+    .header {
+      width: 100%;
+      background: linear-gradient(90deg, #12214e 0%, #078282 100%);
+      color: white;
+      text-align: center;
+      padding: 20px 0 16px 0; /* 與會員頁面完全一致 */
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .calendar-content {
+      flex: 1;
+      width: 100%;
+      overflow-y: auto;
+      padding-bottom: 80px;
+      box-sizing: border-box;
+    }
+    /* 自定義滾動條樣式 */
+    .calendar-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    .calendar-content::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+    }
+    .calendar-content::-webkit-scrollbar-thumb {
+      background: rgba(0,188,212,0.3);
+      border-radius: 4px;
+    }
+    .calendar-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,188,212,0.5);
+    }
+    /* Firefox 滾動條樣式 */
+    .calendar-content {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,188,212,0.3) rgba(255,255,255,0.05);
+    }
+    #calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      padding: 0 12px;
+      background: transparent;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 0;
+      margin-top: 0px;
+      animation: slideInUp 0.8s ease-out;
+    }
+    
+    @keyframes slideInUp {
+      0% { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .day {
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
+      aspect-ratio: 1/1.2;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 6px 2px 2px 2px;
+      text-align: center;
+      position: relative;
+      min-width: 0;
+      max-width: 100%;
+      min-height: 110px;
+      overflow: visible;
+      box-sizing: border-box;
+      cursor: pointer;
+      color: #e0e0e0;
+      font-size: 15px;
+      transition: background 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      animation: fadeInScale 0.6s ease-out;
+    }
+    
+    @keyframes fadeInScale {
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .day:hover {
+      background: rgba(0,188,212,0.13);
+    }
+    .event {
+      margin-top: 4px;
+      padding: 3px 6px;
+      font-size: 12px;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      max-width: 90%;
+    }
+    .event.running {
+      background: linear-gradient(90deg, #99ccff 0%, #ff867f 100%);
+      color: #222;
+    }
+    .event.cycling {
+      background: linear-gradient(90deg, #99ffcc 0%, #38f9d7 100%);
+      color: #222;
+    }
+    .event.swimming {
+      background: linear-gradient(90deg, #42a5f5 0%, #99ffff 100%);
+      color: #222;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal.hidden { display: none; }
+    .modal-content {
+      background: rgba(34, 40, 49, 0.95);
+      padding: 32px 22px 22px 22px;
+      border-radius: 22px;
+      width: 340px;
+      max-width: 96vw;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      color: #e0e0e0;
+      border: 1.5px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
+    }
+    .modal-content h2 {
+      color: #00bcd4;
+      font-size: 20px;
+      margin-top: 0;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .modal-content label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 15px;
+      color: #b0bec5;
+    }
+    .modal-content input,
+    .modal-content select {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: none;
+      background: #181c22;
+      color: #fff;
+      font-size: 15px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      outline: none;
+      transition: background 0.2s;
+    }
+    .modal-content input:focus,
+    .modal-content select:focus {
+      background: #23272f;
+    }
+    .buttons {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    button {
+      padding: 12px 0;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: linear-gradient(90deg, #12214e 0%, #078282 100%);
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,188,212,0.10);
+      transition: background 0.3s, transform 0.2s;
+      flex: 1 1 0;
+      margin: 0 6px;
+      min-width: 0;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #078282 0%, #12214e 100%);
+      transform: scale(1.05);
+    }
+    #syncGarmin {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      max-width: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00bcd4 0%, #2196f3 100%);
+      color: #fff;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0,188,212,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: width 0.25s, max-width 0.25s, min-width 0.25s, background 0.3s, border-radius 0.3s, font-size 0.2s, box-shadow 0.3s;
+      overflow: hidden;
+      position: relative;
+      padding: 0;
+    }
+    #syncGarmin:hover {
+      width: 120px;
+      min-width: 36px;
+      max-width: 120px;
+      border-radius: 18px;
+      background: linear-gradient(90deg, #007bff 0%, #12214e 100%);
+      font-size: 20px;
+      box-shadow: 0 4px 16px rgba(0,188,212,0.18);
+    }
+    #syncGarmin span {
+      display: inline-block;
+      white-space: nowrap;
+      transition: opacity 0.2s, max-width 0.3s, margin-left 0.2s;
+      margin-left: 0;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    #syncGarmin span:last-child {
+      opacity: 0;
+      max-width: 0;
+    }
+    #syncGarmin:hover span:last-child {
+      opacity: 1;
+      max-width: 90px;
+      margin-left: 8px;
+    }
+    #syncGarmin span:first-child {
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
+    #syncGarmin:hover span:first-child {
+      opacity: 1;
+    }
+    #syncStrava {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      max-width: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fc4c02 0%, #ff8c1a 100%);
+      color: #fff;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      box-shadow: 0 2px 8px rgba(252,76,2,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: width 0.25s, max-width 0.25s, min-width 0.25s, background 0.3s, border-radius 0.3s, font-size 0.2s, box-shadow 0.3s;
+      overflow: hidden;
+      position: relative;
+      padding: 0;
+      margin-right: 8px;
+    }
+    #syncStrava:hover {
+      width: 140px !important;
+      min-width: 36px !important;
+      max-width: 140px !important;
+      border-radius: 18px !important;
+      background: linear-gradient(90deg, #fc4c02 0%, #ff8c1a 100%) !important;
+      font-size: 20px !important;
+      box-shadow: 0 4px 16px rgba(252,76,2,0.18) !important;
+    }
+    #syncStrava span {
+      display: inline-block;
+      white-space: nowrap;
+      transition: opacity 0.2s, max-width 0.3s, margin-left 0.2s;
+      margin-left: 0;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    #syncStrava span:last-child {
+      opacity: 0;
+      max-width: 0;
+    }
+    #syncStrava:hover span:last-child {
+      opacity: 1 !important;
+      max-width: 110px !important;
+      margin-left: 8px !important;
+    }
+    #syncStrava span:first-child {
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
+    #syncStrava:hover span:first-child {
+      opacity: 1;
+    }
+    
+    /* 已同步狀態的hover效果 */
+    #syncStrava.synced {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      box-shadow: 0 2px 8px rgba(40,167,69,0.10);
+    }
+    #syncStrava.synced:hover {
+      width: 140px !important;
+      min-width: 36px !important;
+      max-width: 140px !important;
+      border-radius: 18px !important;
+      background: linear-gradient(90deg, #28a745 0%, #20c997 100%) !important;
+      box-shadow: 0 4px 16px rgba(40,167,69,0.18) !important;
+    }
+    @media (max-width: 600px) {
+      .calendar-container {
+        max-width: 100vw;
+        height: 100dvh;
+        min-height: 0;
+        border-radius: 0;
+        padding: 0;
+        margin: 0 auto;
+        padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+      }
+      #calendar {
+        padding: 0 12px;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        max-width: 100vw;
+        margin-bottom: calc(env(safe-area-inset-bottom) + 20px);
+      }
+      .modal-content {
+        width: 98vw;
+        min-width: 0;
+        border-radius: 0 0 18px 18px;
+        margin-bottom: calc(env(safe-area-inset-bottom) + 20px);
+      }
+    }
+    .calendar-actions {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      padding: 0;
+      background: transparent;
+      box-sizing: border-box;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 32px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .calendar-actions #syncGarmin {
+      pointer-events: auto;
+    }
+
+    @media (max-width: 500px) {
+      .calendar-container {
+        max-width: 100vw;
+        height: 100dvh;
+        min-height: 0;
+        border-radius: 0;
+        padding-bottom: 80px; /* 留空間給固定導覽列 */
+      }
+    }
+    /* #modal { display: none !important; } */
+    .header button#prevMonth, .header button#nextMonth {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      max-width: 40px;
+      max-height: 40px;
+      border-radius: 10px;
+      font-size: 18px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      color: #fff;
+      border: none;
+      box-shadow: none;
+      transition: transform 0.2s;
+    }
+    .header button#prevMonth:hover, .header button#nextMonth:hover {
+      background: transparent;
+      transform: scale(1.12);
+    }
+    .header button#prevMonth::after {
+      content: '<';
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .header button#nextMonth::after {
+      content: '>';
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .header button#prevMonth, .header button#nextMonth {
+      font-size: 0; /* 隱藏原本文字 */
+    }
+    .garmin-fab {
+      position: fixed; /* 固定在視窗右下 */
+      right: 12px;
+      bottom: 92px; /* 導覽列上方，避免遮擋 */
+      z-index: 1100;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      pointer-events: auto;
+    }
+    @media (max-width: 500px) {
+      .garmin-fab {
+        bottom: calc(env(safe-area-inset-bottom) + 92px);
+      }
+    }
+    .modal-content .buttons button {
+      background: #00bcd4 !important;
+      color: #fff !important;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,188,212,0.10);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .modal-content .buttons button:hover {
+      background: #0097a7 !important;
+      color: #fff !important;
+      transform: scale(1.04);
+    }
+    .calendar-header {
+      width: 100%;
+      background: rgba(34, 40, 49, 0.95); /* 與容器背景透明度一致 */
+      color: white;
+      text-align: center;
+      padding: 12px 0 8px 0; /* 進一步減少 padding */
+      font-size: 18px; /* 減小字體，讓它更適合作為子標題 */
+      font-weight: 600; /* 使用中等粗細 */
+      letter-spacing: 0.5px; /* 減少字間距 */
+      box-shadow: none; /* 移除陰影，讓它與主 header 形成層次 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .calendar-header button#prevMonth, .calendar-header button#nextMonth {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      max-width: 40px;
+      max-height: 40px;
+      border-radius: 10px;
+      font-size: 18px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      color: #fff;
+      border: none;
+      box-shadow: none;
+      transition: transform 0.2s;
+    }
+    .calendar-header button#prevMonth:hover, .calendar-header button#nextMonth:hover {
+      background: transparent;
+      transform: scale(1.12);
+    }
+    .calendar-header button#prevMonth::after {
+      content: '<';
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .calendar-header button#nextMonth::after {
+      content: '>';
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .calendar-header button#prevMonth, .calendar-header button#nextMonth {
+      font-size: 0; /* 隱藏原本文字 */
+    }
+  </style>
+</head>
+<body>
+  <div class="calendar-container">
+    <div class="header">
+      <span>Clandar</span>
+    </div>
+    <div class="calendar-header">
+      <div style="position: relative; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 1px; box-sizing: border-box;">
+        <button id="prevMonth" style="min-width:44px; background: none; border: none; color: white; padding: 0px 3px; font-size: 24px; font-weight: bold; cursor: pointer; transition: opacity 0.3s; z-index: 1;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">&lt;</button>
+        <span style="position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; font-size: 22px; font-weight: bold; letter-spacing: 2px; pointer-events: none; z-index: 0;" id="monthYear"></span>
+        <button id="nextMonth" style="min-width:44px; background: none; border: none; color: white; padding: 0px 3px; font-size: 24px; font-weight: bold; cursor: pointer; transition: opacity 0.3s; z-index: 1;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">&gt;</button>
+      </div>
+    </div>
+    <div class="calendar-content">
+      <div id="weekday-labels" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 12px 6px 12px;width:100%;box-sizing:border-box;font-size:15px;font-weight:bold;color:#00bcd4;text-align:center;">
+        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+      </div>
+      <div id="calendar"></div>
+    </div>
+    <div class="garmin-fab">
+      <button id="syncStrava" style="margin-right:8px;">
+        <span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;"><img src="../images/Strava.png" alt="Strava" style="width:20px;height:20px;vertical-align:middle;"></span><span>同步 Strava</span>
+      </button>
+      <button id="syncGarmin"><span style="font-size:20px;font-weight:bold;">G</span><span>同步 Garmin</span></button>
+    </div>
+    <!-- 導航列將由 nav.js 自動生成 -->
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>新增/編輯活動</h2>
+      <label>
+        運動類型:
+        <select id="activityType">
+          <option value="跑步">跑步</option>
+          <option value="騎車">騎車</option>
+          <option value="游泳">游泳</option>
+        </select>
+      </label>
+      <label>
+        距離 (KM):
+        <input type="number" id="distance" placeholder="0" min="0">
+      </label>
+      <label>
+        時間 (分鐘):
+        <input type="number" id="duration" placeholder="0" min="0">
+      </label>
+      <div class="buttons">
+        <button id="saveActivity">保存</button>
+        <button id="deleteActivity">刪除</button>
+        <button id="closeModal">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      // DOM 元素
+      const calendar = document.getElementById("calendar");
+      const monthYear = document.getElementById("monthYear");
+      const prevMonth = document.getElementById("prevMonth");
+      const nextMonth = document.getElementById("nextMonth");
+      const modal = document.getElementById("modal");
+      const activityType = document.getElementById("activityType");
+      const distance = document.getElementById("distance");
+      const duration = document.getElementById("duration");
+      const saveActivity = document.getElementById("saveActivity");
+      const deleteActivity = document.getElementById("deleteActivity");
+      const closeModal = document.getElementById("closeModal");
+      const syncGarmin = document.getElementById("syncGarmin");
+      const syncStrava = document.getElementById("syncStrava");
+
+      // 狀態管理
+      let events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+      let currentDate = new Date();
+      let selectedDate = null;
+      let selectedEvent = null;
+      let selectedEventIdx = null;
+      
+      // 獲取用戶 token
+      const token = localStorage.getItem('token');
+
+      // 工具函式
+      const formatDateKey = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
+
+      // 日曆渲染
+      function renderCalendar() {
+        const currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+          try {
+            events = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+          } catch (err) {
+            console.error('Parse calendar events error:', err);
+            events = {};
+          }
+        } else {
+          try {
+            events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+          } catch (err) {
+            console.error('Parse calendar events error:', err);
+            events = {};
+          }
+        }
+        calendar.innerHTML = '';
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        monthYear.textContent = `${year}年 ${month + 1}月`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // 填充空白
+        for (let i = 0; i < firstDay; i++) {
+          calendar.innerHTML += '<div class="day"></div>';
+        }
+
+        // 填充日期
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dayDiv = document.createElement('div');
+          dayDiv.className = 'day';
+          dayDiv.textContent = day;
+
+          const date = new Date(year, month, day);
+          const dateKey = formatDateKey(date);
+          dayDiv.dataset.date = dateKey;
+
+          // 顯示活動
+          if (events[dateKey]) {
+            // 新增：渲染 type: "Event" 的白色標籤（可編輯/刪除多個Event）
+            const eventListForDay = events[dateKey].filter(ev => ev.type === 'Event');
+            if (eventListForDay.length > 0) {
+              const eventDiv = document.createElement('div');
+              eventDiv.className = 'event event-main';
+              eventDiv.style.background = '#fff';
+              eventDiv.style.color = '#222';
+              eventDiv.textContent = 'Event';
+              eventDiv.onclick = (e) => {
+                e.stopPropagation();
+                // 僅顯示所有Event（賽事名稱、活動類型、距離），不可編輯或刪除
+                alert(eventListForDay.map(ev =>
+                  `賽事名稱：${ev.name}\n活動類型：${ev.eventType || ev.type}\n日期：${dateKey}${ev.distance ? `\n距離：${ev.distance} km` : ''}`
+                ).join('\n\n'));
+              };
+              dayDiv.appendChild(eventDiv);
+            }
+            // 合併同一天所有跑步資料（含 Strava Run）
+            let runTotal = 0;
+            let runIdx = null;
+            let shownRun = false, shownBike = false, shownSwim = false;
+            let bikeTotal = 0, bikeIdx = null;
+            let swimTotal = 0, swimIdx = null;
+            events[dateKey].forEach((event, idx) => {
+              // 支援 Strava 英文類型
+              let type = event.type;
+              if (type === 'Run') type = '跑步';
+              if (type === 'Ride') type = '騎車';
+              if (type === 'Swim') type = '游泳';
+              if (type === '跑步') {
+                runTotal += Number(event.distance) || 0;
+                if (runIdx === null) runIdx = idx;
+              } else if (type === '騎車') {
+                bikeTotal += Number(event.distance) || 0;
+                if (bikeIdx === null) bikeIdx = idx;
+              } else if (type === '游泳') {
+                swimTotal += Number(event.distance) || 0;
+                if (swimIdx === null) swimIdx = idx;
+              }
+            });
+            // 顯示跑步合併
+            if (runTotal > 0 && !shownRun) {
+              const eventDiv = document.createElement('div');
+              eventDiv.className = 'event running';
+              eventDiv.textContent = runTotal.toFixed(1) + 'km';
+              eventDiv.onclick = (e) => {
+                e.stopPropagation();
+                openModal(dateKey, events[dateKey][runIdx], runIdx);
+              };
+              dayDiv.appendChild(eventDiv);
+              shownRun = true;
+            }
+            // 顯示騎車合併
+            if (bikeTotal > 0 && !shownBike) {
+              const eventDiv = document.createElement('div');
+              eventDiv.className = 'event cycling';
+              eventDiv.textContent = bikeTotal.toFixed(1) + 'km';
+              eventDiv.onclick = (e) => {
+                e.stopPropagation();
+                openModal(dateKey, events[dateKey][bikeIdx], bikeIdx);
+              };
+              dayDiv.appendChild(eventDiv);
+              shownBike = true;
+            }
+            // 顯示游泳合併
+            if (swimTotal > 0 && !shownSwim) {
+              const eventDiv = document.createElement('div');
+              eventDiv.className = 'event swimming';
+              eventDiv.textContent = swimTotal.toFixed(1) + 'km';
+              eventDiv.onclick = (e) => {
+                e.stopPropagation();
+                openModal(dateKey, events[dateKey][swimIdx], swimIdx);
+              };
+              dayDiv.appendChild(eventDiv);
+              shownSwim = true;
+            }
+            // 其他活動（如有）
+            events[dateKey].forEach((event, idx) => {
+              let type = event.type;
+              if (["跑步","騎車","游泳","Event","Run","Ride","Swim"].includes(type)) return;
+              const eventDiv = document.createElement('div');
+              eventDiv.className = 'event';
+              eventDiv.innerHTML = `
+                ${event.type}<br>
+                ${event.distance ? event.distance.toFixed(1) + 'km' : ''}
+                ${event.duration ? event.duration + 'min' : ''}
+              `;
+              eventDiv.onclick = (e) => {
+                e.stopPropagation();
+                openModal(dateKey, event, idx);
+              };
+              dayDiv.appendChild(eventDiv);
+            });
+          }
+          dayDiv.onclick = () => openModal(dateKey);
+          calendar.appendChild(dayDiv);
+        }
+      }
+
+      // 彈窗控制
+      function openModal(dateKey, event = null, eventIdx = null) {
+        selectedDate = dateKey;
+        selectedEvent = event;
+        selectedEventIdx = eventIdx;
+        modal.classList.remove('hidden');
+
+        if (event) {
+          activityType.value = event.type;
+          distance.value = event.distance || '';
+          duration.value = event.duration || '';
+          deleteActivity.style.display = 'inline-block';
+        } else {
+          activityType.value = '跑步';
+          distance.value = '';
+          duration.value = '';
+          deleteActivity.style.display = 'none';
+        }
+      }
+
+      // 保存活動
+      function saveEvent() {
+        const currentUser = localStorage.getItem('currentUser');
+        const type = activityType.value;
+        const dist = parseFloat(distance.value) || 0;
+        const dur = parseFloat(duration.value) || 0;
+
+        if (dist + dur === 0) return alert('請輸入至少一個數值！');
+
+        if (!events[selectedDate]) events[selectedDate] = [];
+
+        if (selectedEvent && typeof selectedEventIdx === 'number') {
+          // 編輯現有事件
+          events[selectedDate][selectedEventIdx] = {
+            type,
+            distance: dist,
+            duration: dur
+          };
+        } else {
+          // 新增事件
+          events[selectedDate].push({
+            type,
+            distance: dist,
+            duration: dur
+          });
+        }
+
+        if (currentUser) {
+          localStorage.setItem(`calendarEvents_${currentUser}`, JSON.stringify(events));
+        } else {
+          localStorage.setItem('calendarEvents', JSON.stringify(events));
+        }
+        
+        // 同步到雲端並清除快取
+        if (localStorage.getItem('token')) {
+          syncToCloud().then(() => {
+            // 清除相關快取
+            fetch('/api/clear-cache', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            }).catch(err => console.log('清除快取失敗:', err));
+          });
+        }
+        
+        modal.classList.add('hidden');
+        renderCalendar();
+      }
+
+      // 刪除活動
+      function deleteEvent() {
+        const currentUser = localStorage.getItem('currentUser');
+        if (selectedEvent && typeof selectedEventIdx === 'number') {
+          events[selectedDate].splice(selectedEventIdx, 1);
+          if (events[selectedDate].length === 0) delete events[selectedDate];
+        }
+        if (currentUser) {
+          localStorage.setItem(`calendarEvents_${currentUser}`, JSON.stringify(events));
+        } else {
+          localStorage.setItem('calendarEvents', JSON.stringify(events));
+        }
+        
+        // 同步到雲端並清除快取
+        if (localStorage.getItem('token')) {
+          syncToCloud().then(() => {
+            // 清除相關快取
+            fetch('/api/clear-cache', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            }).catch(err => console.log('清除快取失敗:', err));
+          });
+        }
+        
+        modal.classList.add('hidden');
+        renderCalendar();
+      }
+
+      // 同步資料到雲端
+      async function syncToCloud() {
+        const userId = localStorage.getItem('currentUser');
+        const token = localStorage.getItem('token');
+        if (!userId || !token) return;
+        
+        try {
+          // 先從伺服器獲取現有數據
+          const response = await fetch(`/api/user-data/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          let existingData = {};
+          if (response.ok) {
+            const result = await response.json();
+            existingData = result.data || {};
+          }
+          
+          // 更新 calendarEvents
+          const updatedData = {
+            ...existingData,
+            calendarEvents: events
+          };
+          
+          await fetch(`/api/user-data/${userId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ data: updatedData })
+          });
+          
+          console.log('日曆資料已同步到雲端');
+        } catch (error) {
+          console.error('同步到雲端失敗:', error);
+        }
+      }
+
+      // 事件監聽
+      prevMonth.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+      });
+
+      nextMonth.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+      });
+
+      saveActivity.addEventListener('click', saveEvent);
+      deleteActivity.addEventListener('click', deleteEvent);
+      closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+
+      // 初始化日曆
+      renderCalendar();
+
+      // 初始化
+      // checkLogin(); // 讓未登入者也能使用日曆
+
+
+
+      // ====== 新增：Event 編輯/刪除 Modal ======
+      function showEventEditModal(dateKey, eventList) {
+        // 建立一個簡單的彈窗
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.left = 0;
+        modal.style.top = 0;
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.background = 'rgba(0,0,0,0.4)';
+        modal.style.zIndex = 9999;
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.innerHTML = `<div style="background:#23272f;padding:28px 18px 18px 18px;border-radius:16px;min-width:260px;max-width:90vw;box-shadow:0 4px 24px rgba(0,0,0,0.18);color:#fff;">
+          <h3 style='color:#00bcd4;margin-top:0;'>編輯目標賽事</h3>
+          <div id='eventEditList'></div>
+          <button id='closeEventEditModal' style='margin-top:18px;width:100%;background:#888;color:#fff;border:none;padding:8px 0;border-radius:8px;'>關閉</button>
+        </div>`;
+        document.body.appendChild(modal);
+        const listDiv = modal.querySelector('#eventEditList');
+        listDiv.innerHTML = eventList.map((ev, idx) => `
+          <form data-idx='${idx}' style='margin-bottom:18px;border-bottom:1px solid #444;padding-bottom:10px;'>
+            <label>賽事名稱：<input name='name' value='${ev.name || ''}' style='width:90%;margin-bottom:6px;'/></label><br>
+            <label>活動類型：<select name='eventType' style='width:94%;margin-bottom:6px;'>
+              <option value='鐵人三項' ${ev.eventType==='鐵人三項'?'selected':''}>鐵人三項</option>
+              <option value='游泳' ${ev.eventType==='游泳'?'selected':''}>游泳</option>
+              <option value='騎車' ${ev.eventType==='騎車'?'selected':''}>騎車</option>
+              <option value='跑步' ${ev.eventType==='跑步'?'selected':''}>跑步</option>
+              <option value='越野跑' ${ev.eventType==='越野跑'?'selected':''}>越野跑</option>
+              <option value='其他' ${ev.eventType==='其他'?'selected':''}>其他</option>
+            </select></label><br>
+            <label>距離(km)：<input name='distance' type='number' min='0' step='0.1' value='${ev.distance || ''}' style='width:60px;'/></label><br>
+            <button type='submit' style='margin-top:6px;background:#00bcd4;color:#fff;border:none;padding:6px 16px;border-radius:8px;'>儲存</button>
+            <button type='button' class='deleteEventBtn' style='margin-left:8px;background:#b71c1c;color:#fff;border:none;padding:6px 16px;border-radius:8px;'>刪除</button>
+          </form>
+        `).join('');
+        // 編輯/儲存
+        listDiv.querySelectorAll('form').forEach(form => {
+          form.onsubmit = function(e) {
+            e.preventDefault();
+            const idx = Number(form.getAttribute('data-idx'));
+            const name = form.name.value.trim();
+            const eventType = form.eventType.value;
+            const distance = parseFloat(form.distance.value) || 0;
+            // 更新 calendarEvents
+            const currentUser = localStorage.getItem('currentUser');
+            let calendarEvents = {};
+            if (currentUser) {
+              calendarEvents = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+            } else {
+              calendarEvents = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+            }
+            const ev = calendarEvents[dateKey].filter(ev => ev.type === 'Event')[idx];
+            // 取得舊名稱
+            const oldName = ev.name;
+            ev.name = name;
+            ev.eventType = eventType;
+            ev.distance = distance;
+            // 同步更新 trainingGoals
+            let goals = JSON.parse(localStorage.getItem('trainingGoals') || '[]');
+            let found = false;
+            goals = goals.map(g => {
+              if (g.date === dateKey && g.name === oldName) {
+                found = true;
+                return { ...g, name, type: eventType, distance };
+              }
+              return g;
+            });
+            if (!found) {
+              // 若找不到，則新增一筆
+              goals.push({ name, date: dateKey, type: eventType, distance });
+            }
+            localStorage.setItem('trainingGoals', JSON.stringify(goals));
+            if (currentUser) {
+              localStorage.setItem(`calendarEvents_${currentUser}`, JSON.stringify(calendarEvents));
+            } else {
+              localStorage.setItem('calendarEvents', JSON.stringify(calendarEvents));
+            }
+            if (localStorage.getItem('token') && typeof syncToCloud === 'function') syncToCloud();
+            renderCalendar();
+            modal.remove();
+          };
+          // 刪除
+          form.querySelector('.deleteEventBtn').onclick = function() {
+            const idx = Number(form.getAttribute('data-idx'));
+            // 刪除 calendarEvents
+            const currentUser = localStorage.getItem('currentUser');
+            let calendarEvents = {};
+            if (currentUser) {
+              calendarEvents = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+            } else {
+              calendarEvents = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+            }
+            const ev = calendarEvents[dateKey].filter(ev => ev.type === 'Event')[idx];
+            const oldName = ev.name;
+            calendarEvents[dateKey] = calendarEvents[dateKey].filter((ev, i) => !(ev.type === 'Event' && i === idx));
+            if (calendarEvents[dateKey].length === 0) delete calendarEvents[dateKey];
+            // 刪除 trainingGoals
+            let goals = JSON.parse(localStorage.getItem('trainingGoals') || '[]');
+            goals = goals.filter(g => !(g.date === dateKey && g.name === oldName));
+            localStorage.setItem('trainingGoals', JSON.stringify(goals));
+            if (currentUser) {
+              localStorage.setItem(`calendarEvents_${currentUser}`, JSON.stringify(calendarEvents));
+            } else {
+              localStorage.setItem('calendarEvents', JSON.stringify(calendarEvents));
+            }
+            if (localStorage.getItem('token') && typeof syncToCloud === 'function') syncToCloud();
+            renderCalendar();
+            modal.remove();
+          };
+        });
+        // 關閉
+        modal.querySelector('#closeEventEditModal').onclick = () => modal.remove();
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+      }
+
+      if (localStorage.getItem('token') && typeof syncFromCloud === 'function') {
+        // 移除 setInterval 定時自動同步
+      }
+
+      // 手機滑動切換月份
+      let touchStartX = 0;
+      let touchEndX = 0;
+      let touchStartY = 0;
+      let touchEndY = 0;
+      const calendarContainer = document.querySelector('.calendar-container');
+      
+      calendarContainer.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      });
+      
+      calendarContainer.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 1) {
+          touchEndX = e.touches[0].clientX;
+          touchEndY = e.touches[0].clientY;
+        }
+      });
+      
+      calendarContainer.addEventListener('touchend', function(e) {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        
+        // 只有當水平滑動距離大於垂直滑動距離，且水平滑動距離大於 50px 時才切換月份
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+          if (deltaX < 0) {
+            // 向左滑，下一個月
+            nextMonth.click();
+          } else {
+            // 向右滑，上個月
+            prevMonth.click();
+          }
+        }
+        
+        // 重置觸控位置
+        touchStartX = 0;
+        touchEndX = 0;
+        touchStartY = 0;
+        touchEndY = 0;
+      });
+
+      // Garmin 同步功能
+      syncGarmin.addEventListener('click', async () => {
+        // 展開按鈕並保持展開狀態
+        syncGarmin.style.width = '120px';
+        syncGarmin.style.minWidth = '36px';
+        syncGarmin.style.maxWidth = '120px';
+        syncGarmin.style.borderRadius = '18px';
+        syncGarmin.style.background = 'linear-gradient(90deg, #007bff 0%, #12214e 100%)';
+        syncGarmin.style.fontSize = '20px';
+        syncGarmin.style.boxShadow = '0 4px 16px rgba(0,188,212,0.18)';
+        
+        // 顯示文字
+        const span = syncGarmin.querySelector('span:last-child');
+        if (span) {
+          span.style.opacity = '1';
+          span.style.maxWidth = '90px';
+          span.style.marginLeft = '8px';
+        }
+        
+        // 延遲顯示提示訊息
+        setTimeout(() => {
+          alert('哎呀～這功能需要 Garmin API 魔法生成的啦🧙‍♂️✨');
+        }, 300);
+      });
+
+
+
+      // Strava 同步管理器
+      const stravaSyncManager = {
+        // 同步狀態
+        isEnabled: false,
+        
+        // 初始化
+        init() {
+          this.isEnabled = localStorage.getItem('stravaSyncEnabled') === 'true';
+          this.updateButtonState();
+          this.startPeriodicCheck();
+        },
+        
+        // 檢查 token 是否過期
+        isTokenExpired() {
+          if (!window.tokenManager) return true;
+          return window.tokenManager.isTokenExpired();
+        },
+        
+        // 檢查連接狀態
+        async checkConnection() {
+          try {
+            // 先檢查 token 是否過期
+            if (this.isTokenExpired()) {
+              console.log('Strava token 已過期');
+              return { connected: false, reason: 'token_expired' };
+            }
+            
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/strava/activities', {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (response.status === 401) {
+              console.log('Strava 連接檢查失敗：權限已失效');
+              return { connected: false, reason: 'unauthorized' };
+            }
+            
+            if (response.ok) {
+              console.log('Strava 連接檢查成功');
+              return { connected: true, reason: 'success' };
+            }
+            
+            return { connected: false, reason: 'api_error' };
+          } catch (error) {
+            console.error('Strava 連接檢查失敗:', error);
+            return { connected: false, reason: 'network_error' };
+          }
+        },
+        
+        // 更新按鈕狀態
+        updateButtonState() {
+          const span = syncStrava.querySelector('span:last-child');
+          
+          if (this.isEnabled) {
+            if (this.isTokenExpired()) {
+              // Token 過期狀態 - 橘色
+              this.setButtonStyle('expired');
+              if (span) {
+                span.textContent = 'Token 過期';
+              }
+            } else {
+              // 已同步狀態 - 綠色
+              this.setButtonStyle('synced');
+              if (span) {
+                span.textContent = 'Strava 已同步';
+              }
+            }
+          } else {
+            // 未同步狀態 - 橙色
+            this.setButtonStyle('normal');
+            if (span) {
+              span.textContent = '同步 Strava';
+            }
+          }
+        },
+        
+        // 設置按鈕樣式
+        setButtonStyle(state) {
+          const button = syncStrava;
+          
+          // 重置樣式
+          button.classList.remove('synced');
+          button.style.width = '36px';
+          button.style.minWidth = '36px';
+          button.style.maxWidth = '36px';
+          button.style.borderRadius = '50%';
+          button.style.fontSize = '20px';
+          
+          const span = button.querySelector('span:last-child');
+          if (span) {
+            span.style.opacity = '0';
+            span.style.maxWidth = '0';
+            span.style.marginLeft = '0';
+          }
+          
+          switch (state) {
+            case 'expired':
+              button.style.background = 'linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%)';
+              button.style.boxShadow = '0 2px 8px rgba(255,140,0,0.10)';
+              break;
+            case 'synced':
+              button.classList.add('synced');
+              button.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+              button.style.boxShadow = '0 2px 8px rgba(40,167,69,0.10)';
+              break;
+            case 'normal':
+            default:
+              button.style.background = 'linear-gradient(135deg, #fc4c02 0%, #ff8c1a 100%)';
+              button.style.boxShadow = '0 2px 8px rgba(252,76,2,0.10)';
+              break;
+          }
+        },
+        
+        // 啟用同步
+        async enableSync() {
+          try {
+            const res = await fetch('/api/strava/auth');
+            const data = await res.json();
+            if (data.url) {
+              window.location.href = data.url;
+            } else {
+              throw new Error('無法取得 Strava 授權網址');
+            }
+          } catch (e) {
+            console.error('啟用 Strava 同步失敗:', e);
+            alert('Strava 授權流程發生錯誤');
+          }
+        },
+        
+        // 禁用同步
+        async disableSync() {
+          console.log('disableSync called');
+          this.isEnabled = false;
+          localStorage.setItem('stravaSyncEnabled', 'false');
+          await this.updateStatusInCloud(false); // 這會觸發 server 推播
+          this.updateButtonState();
+          this.stopPeriodicCheck();
+          alert('已取消 Strava 同步');
+        },
+        
+        // 處理按鈕點擊
+        async handleButtonClick() {
+          await this.syncStatusFromCloud(); // 確保狀態最新
+          console.log('handleButtonClick, isEnabled:', this.isEnabled);
+          if (!this.isEnabled) {
+            await this.enableSync();
+            return;
+          }
+          if (this.isTokenExpired()) {
+            alert('Strava 權限已過期，請重新綁定 Strava 帳號');
+            await this.enableSync();
+            return;
+          }
+          const connection = await this.checkConnection();
+          if (!connection.connected) {
+            alert('Strava 權限已失效，請重新綁定 Strava 帳號');
+            await this.enableSync();
+            return;
+          }
+          this.showDisableConfirmModal();
+        },
+        
+                 // 顯示禁用確認對話框
+         showDisableConfirmModal() {
+           // 創建確認對話框
+           const modal = document.createElement('div');
+           modal.style.position = 'fixed';
+           modal.style.top = '0';
+           modal.style.left = '0';
+           modal.style.width = '100vw';
+           modal.style.height = '100vh';
+           modal.style.background = 'rgba(0,0,0,0.45)';
+           modal.style.zIndex = '3000';
+           modal.style.display = 'flex';
+           modal.style.justifyContent = 'center';
+           modal.style.alignItems = 'center';
+           modal.innerHTML = `
+             <div style="background:#23272f;border-radius:18px;box-shadow:0 4px 24px rgba(0,188,212,0.10);padding:32px 22px 22px 22px;min-width:240px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:18px;">
+               <div style="font-size:18px;color:#fff;font-weight:600;margin-bottom:10px;">確定要取消 Strava 同步嗎？</div>
+               <div style="display:flex;gap:18px;width:100%;justify-content:center;">
+                 <button id="stravaModalConfirm" style="padding:10px 0;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(90deg,#12214e 0%,#078282 100%);color:white;font-size:15px;font-weight:600;box-shadow:0 2px 8px rgba(0,188,212,0.10);min-width:80px;">確認</button>
+                 <button id="stravaModalCancel" style="padding:10px 0;border:none;border-radius:12px;cursor:pointer;background:rgba(255,255,255,0.08);color:#b0bec5;font-size:15px;font-weight:600;box-shadow:0 2px 8px rgba(0,188,212,0.05);min-width:80px;">取消</button>
+               </div>
+             </div>
+           `;
+           document.body.appendChild(modal);
+           
+           const confirmBtn = modal.querySelector('#stravaModalConfirm');
+           const cancelBtn = modal.querySelector('#stravaModalCancel');
+           
+           confirmBtn.onclick = () => {
+             document.body.removeChild(modal);
+             console.log('showDisableConfirmModal: confirmBtn clicked');
+             stravaSyncManager.disableSync();
+           };
+           
+           cancelBtn.onclick = () => {
+             document.body.removeChild(modal);
+           };
+         },
+        
+        // 優化：只同步近 90 天活動
+        async syncData() {
+          await this.syncStatusFromCloud(); // 先同步雲端狀態
+          if (!this.isEnabled) return;
+          const connection = await this.checkConnection();
+          if (!connection.connected) {
+            console.log('Strava 未連接，跳過同步');
+            return;
+          }
+          syncToast.style.display = 'flex';
+          try {
+            const token = localStorage.getItem('token');
+            // 只抓近 90 天
+            const after = Math.floor((Date.now() - 90*24*60*60*1000)/1000); // unix timestamp (秒)
+            const url = `/api/strava/activities?after=${after}`;
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (response.status === 401) throw new Error('權限已失效');
+            if (response.ok) {
+              const data = await response.json();
+              if (data.activities && data.activities.length > 0) {
+                await this.processActivities(data.activities);
+                console.log('Strava 數據同步成功');
+              }
+            }
+          } catch (error) {
+            console.error('Strava 同步失敗:', error);
+          } finally {
+            syncToast.style.display = 'none';
+          }
+        },
+        // 優化：只新增新活動
+        async processActivities(activities) {
+          const currentUser = localStorage.getItem('currentUser');
+          let events = {};
+          if (currentUser) {
+            events = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+          } else {
+            events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+          }
+          let newCount = 0;
+          activities.forEach(activity => {
+            const dateKey = formatDateKey(new Date(activity.start_date));
+            if (!events[dateKey]) events[dateKey] = [];
+            let activityType = activity.type;
+            if (activityType === 'Run') activityType = '跑步';
+            if (activityType === 'Ride') activityType = '騎車';
+            if (activityType === 'Swim') activityType = '游泳';
+            // 只比對 strava_id
+            const exists = events[dateKey].some(ev => ev.strava_id === activity.id);
+            if (!exists) {
+              events[dateKey].push({
+                type: activityType,
+                distance: activity.distance,
+                duration: Math.round(activity.moving_time / 60),
+                source: 'Strava',
+                strava_id: activity.id
+              });
+              newCount++;
+            }
+          });
+          if (currentUser) {
+            localStorage.setItem(`calendarEvents_${currentUser}`, JSON.stringify(events));
+            localStorage.setItem('calendarEvents', JSON.stringify(events));
+          } else {
+            localStorage.setItem('calendarEvents', JSON.stringify(events));
+          }
+          if (typeof syncToCloud === 'function') {
+            await syncToCloud();
+            console.log('Strava 活動已同步到雲端');
+          }
+          renderCalendar();
+          // 顯示同步結果
+          if (typeof syncToast !== 'undefined') {
+            syncToast.innerHTML = `<div style='padding:6px 12px;'>Strava 同步完成，新增 ${newCount} 筆</div>`;
+            setTimeout(()=>{ syncToast.style.display='none'; syncToast.innerHTML = `<div style=\"display:flex;align-items:center;gap:10px;\"><span class=\"toast-spinner\" style=\"display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,0.35);border-radius:50%;border-top-color:#fff;animation:spin 1s linear infinite;\"></span><span>同步中...</span></div>`; }, 1800);
+          }
+        },
+        
+        // 從雲端同步狀態
+        async syncStatusFromCloud() {
+          const userId = localStorage.getItem('currentUser');
+          const token = localStorage.getItem('token');
+          if (!userId || !token) return;
+          
+          try {
+            const response = await fetch('/api/user-data', {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+              const userData = await response.json();
+              let cloudStravaSyncEnabled = null;
+              
+              // 檢查多種可能的數據結構
+              if (typeof userData.stravaSyncEnabled === 'boolean') {
+                cloudStravaSyncEnabled = userData.stravaSyncEnabled;
+              } else if (userData.stravaSync && typeof userData.stravaSync.enabled === 'boolean') {
+                cloudStravaSyncEnabled = userData.stravaSync.enabled;
+              } else if (userData.stravaSync && typeof userData.stravaSync.syncEnabled === 'boolean') {
+                cloudStravaSyncEnabled = userData.stravaSync.syncEnabled;
+              }
+              
+              if (cloudStravaSyncEnabled !== null) {
+                this.isEnabled = cloudStravaSyncEnabled;
+                localStorage.setItem('stravaSyncEnabled', this.isEnabled.toString());
+                console.log('從雲端同步 Strava 狀態:', this.isEnabled);
+              } else {
+                // 如果雲端沒有狀態，將本地狀態同步到雲端
+                const localStatus = localStorage.getItem('stravaSyncEnabled') === 'true';
+                await this.updateStatusInCloud(localStatus);
+              }
+              
+              this.updateButtonState();
+            }
+          } catch (error) {
+            console.error('同步 Strava 狀態失敗:', error);
+          }
+        },
+        
+        // 更新雲端狀態
+        async updateStatusInCloud(enabled) {
+          const userId = localStorage.getItem('currentUser');
+          const token = localStorage.getItem('token');
+          console.log('updateStatusInCloud', { userId, enabled });
+          if (!userId || !token) return;
+          try {
+            const resp = await fetch('/api/strava/update-sync-status', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ stravaSyncEnabled: enabled })
+            });
+            const data = await resp.json();
+            console.log('updateStatusInCloud resp', data);
+          } catch (error) {
+            console.error('更新雲端 Strava 狀態失敗:', error);
+          }
+        },
+        
+        // 啟動定期檢查
+        startPeriodicCheck() {
+          // 每5分鐘檢查一次 token 過期狀態（減少頻率）
+          this.periodicCheckInterval = setInterval(() => {
+            if (this.isEnabled && this.isTokenExpired()) {
+              console.log('檢測到 Strava token 過期，更新按鈕狀態');
+              this.updateButtonState();
+            }
+          }, 5 * 60 * 1000);
+        },
+        
+        // 停止定期檢查
+        stopPeriodicCheck() {
+          if (this.periodicCheckInterval) {
+            clearInterval(this.periodicCheckInterval);
+            this.periodicCheckInterval = null;
+          }
+        }
+             };
+
+       // 載入提示（非全螢幕）：小型 Toast 於底部中央
+       const syncToast = document.createElement('div');
+       syncToast.id = 'syncToast';
+       syncToast.style.display = 'none';
+       syncToast.style.position = 'fixed';
+       syncToast.style.left = '50%';
+       syncToast.style.bottom = '90px';
+       syncToast.style.transform = 'translateX(-50%)';
+       syncToast.style.zIndex = '2000';
+       syncToast.style.background = 'rgba(34,40,49,0.92)';
+       syncToast.style.border = '1px solid rgba(255,255,255,0.12)';
+       syncToast.style.borderRadius = '12px';
+       syncToast.style.padding = '8px 12px';
+       syncToast.style.color = '#fff';
+       syncToast.style.fontSize = '14px';
+       syncToast.style.fontWeight = '600';
+       syncToast.style.letterSpacing = '1px';
+       syncToast.style.backdropFilter = 'blur(4px)';
+       syncToast.style.pointerEvents = 'none';
+       syncToast.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><span class="toast-spinner" style="display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,0.35);border-radius:50%;border-top-color:#fff;animation:spin 1s linear infinite;"></span><span>同步中...</span></div>`;
+       document.body.appendChild(syncToast);
+       // spinner動畫
+       const style = document.createElement('style');
+       style.innerHTML = `@keyframes spin { to { transform: rotate(360deg); } }`;
+       document.head.appendChild(style);
+
+ 
+
+      // 啟動同步（只立即同步一次，不設置定時器）
+      function startStravaSync() {
+        stravaSyncManager.syncData();
+      }
+
+      // 同步 Strava 狀態（每次點擊導航列日曆按鈕時檢查）
+      function syncStravaStatusOnDemand() {
+        stravaSyncManager.syncStatusFromCloud();
+      }
+
+      // 停止同步（清除定時器）
+      function stopStravaSync() {
+        stravaSyncManager.stopPeriodicCheck();
+      }
+
+
+
+      // Strava 同步功能
+      syncStrava.addEventListener('click', async () => {
+        await stravaSyncManager.handleButtonClick();
+      });
+
+
+
+      // 頁面載入時初始化 Strava 同步管理器
+      stravaSyncManager.init();
+
+      // 從雲端同步 Strava 狀態
+      stravaSyncManager.syncStatusFromCloud().then(() => {
+        // STRAVA 已同步則檢查連接狀態後再同步
+        if (stravaSyncManager.isEnabled) {
+          stravaSyncManager.checkConnection().then(connection => {
+            if (connection.connected) {
+              stravaSyncManager.syncData();
+            } else {
+              // 如果連接失敗，禁用同步狀態
+              console.log('Strava 連接失敗，禁用自動同步');
+              stravaSyncManager.disableSync();
+            }
+          });
+        }
+      });
+
+
+      // ====== 新增：同步狀態管理 ======
+      function setSyncingState(state) {
+        localStorage.setItem('calendarIsSyncing', state ? 'true' : 'false');
+      }
+      function getSyncingState() {
+        return localStorage.getItem('calendarIsSyncing') === 'true';
+      }
+      // --- 優化 Strava 同步觸發 ---
+      let isSyncing = false;
+      async function safeSyncStrava() {
+        if (getSyncingState()) {
+          syncToast.style.display = 'flex';
+          return;
+        }
+        setSyncingState(true);
+        syncToast.style.display = 'flex';
+        try {
+          await stravaSyncManager.syncStatusFromCloud(); // 先同步雲端狀態
+          if (stravaSyncManager.isEnabled) {
+            const connection = await stravaSyncManager.checkConnection();
+            if (connection.connected) {
+              await stravaSyncManager.syncData();
+            }
+          }
+        } finally {
+          setSyncingState(false);
+          syncToast.style.display = 'none';
+        }
+      }
+      // 頁面載入時自動同步一次 (延遲執行避免與統一管理器衝突)
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(safeSyncStrava, 2000); // 延遲2秒
+      });
+      // 用戶主動點擊才同步
+      syncStrava.addEventListener('click', safeSyncStrava);
+      // 其他情境只刷新按鈕狀態，不做同步
+      window.addEventListener('pageshow', () => {
+        stravaSyncManager.updateButtonState();
+        if (getSyncingState()) {
+          syncToast.style.display = 'flex';
+        } else {
+          syncToast.style.display = 'none';
+        }
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) stravaSyncManager.updateButtonState();
+        if (getSyncingState()) {
+          syncToast.style.display = 'flex';
+        } else {
+          syncToast.style.display = 'none';
+        }
+      });
+      // 監聽同步狀態變化（多分頁同步）
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'calendarIsSyncing') {
+          if (getSyncingState()) {
+            syncToast.style.display = 'flex';
+          } else {
+            syncToast.style.display = 'none';
+          }
+        }
+      });
+
+
+      // --- 多裝置/多分頁同步 ---
+      // 1. 分頁間即時同步：偵測 localStorage 變動自動刷新日曆
+      window.addEventListener('storage', function(e) {
+        if (e.key && e.key.startsWith('calendarEvents')) {
+          renderCalendar();
+        }
+      });
+      // 2. 導航列日曆按鈕觸發同步（暴露全域函數供 nav.js 呼叫）
+      window.syncCalendarFromNav = safeSyncStrava;
+      // 3. 移除 setInterval 定時自動同步（如有）
+      // （原本 setInterval 已經不在新版，這裡保證不會再自動定時同步）
+
+
+      // 導航列事件由 nav.js 統一處理
+
+      // 在頁面載入時重置按鈕狀態
+      window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+          // 重置 G 按鈕狀態
+          syncGarmin.style.width = '36px';
+          syncGarmin.style.minWidth = '36px';
+          syncGarmin.style.maxWidth = '36px';
+          syncGarmin.style.borderRadius = '50%';
+          syncGarmin.style.background = 'linear-gradient(135deg, #00bcd4 0%, #2196f3 100%)';
+          syncGarmin.style.fontSize = '20px';
+          syncGarmin.style.boxShadow = '0 2px 8px rgba(0,188,212,0.10)';
+          
+          // 隱藏文字
+          const span = syncGarmin.querySelector('span:last-child');
+          if (span) {
+            span.style.opacity = '0';
+            span.style.maxWidth = '0';
+            span.style.marginLeft = '0';
+          }
+        }
+        
+        // 每次頁面顯示時都同步 Strava 狀態
+        stravaSyncManager.syncStatusFromCloud();
+      });
+
+      // 監聽頁面可見性變化，當頁面重新可見時同步狀態
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          // 頁面重新可見時同步 Strava 狀態
+          stravaSyncManager.syncStatusFromCloud();
+        }
+      });
+
+      // ===== Service Worker 註冊與訊息監聽 =====
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          console.log('Service Worker 註冊成功', reg);
+        }).catch(err => {
+          console.warn('Service Worker 註冊失敗', err);
+        });
+        // 監聽 Service Worker 傳來的訊息
+        navigator.serviceWorker.addEventListener('message', event => {
+          if (event.data && event.data.type === 'strava-sync') {
+            if (event.data.status === 'start') {
+              syncToast.style.display = 'flex';
+            } else if (event.data.status === 'done') {
+              syncToast.style.display = 'none';
+              renderCalendar();
+            }
+          }
+          if (event.data && event.data.type === 'push-sync') {
+            renderCalendar();
+            syncToast.innerHTML = `<div style='padding:6px 12px;'>有新運動資料同步</div>`;
+            syncToast.style.display = 'flex';
+            setTimeout(()=>{ syncToast.style.display='none'; }, 2000);
+          }
+          if (event.data && event.data.type === 'stravaSyncStatusChanged') {
+            // 收到推播時自動同步 Strava 狀態與按鈕
+            stravaSyncManager.syncStatusFromCloud();
+          }
+        });
+      }
+
+      // ===== Web Push 註冊與訂閱 =====
+      async function registerPush() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        const reg = await navigator.serviceWorker.ready;
+        // 取得 server public key
+        const resp = await fetch('/api/push/public-key');
+        const { publicKey } = await resp.json();
+        function urlBase64ToUint8Array(base64String) {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+          const rawData = window.atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          return outputArray;
+        }
+        // 先檢查現有訂閱
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          await existing.unsubscribe();
+        }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey)
+        });
+        // 傳給 server
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sub)
+        });
+        console.log('Web Push 已訂閱');
+      }
+      // 頁面載入時自動註冊推播
+      registerPush().catch(console.warn);
+    });
+  </script>
+  <script src="../auth.js"></script>
+  <script src="../nav.js"></script>
+</body>
+</html>

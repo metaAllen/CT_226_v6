@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strava 同步調試</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .debug-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .debug-section h3 {
+      color: #333;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .status.warning { background: #fff3cd; color: #856404; }
+    .status.info { background: #d1ecf1; color: #0c5460; }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #0056b3; }
+    button:disabled { background: #6c757d; cursor: not-allowed; }
+    .log {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 10px 0;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .token-info {
+      background: #e9ecef;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Strava 同步調試工具</h1>
+  
+  <div class="debug-section">
+    <h3>1. 基本狀態檢查</h3>
+    <button onclick="checkBasicStatus()">檢查基本狀態</button>
+    <div id="basicStatus"></div>
+  </div>
+
+  <div class="debug-section">
+    <h3>2. Token 狀態檢查</h3>
+    <button onclick="checkTokenStatus()">檢查 Token 狀態</button>
+    <div id="tokenStatus"></div>
+  </div>
+
+  <div class="debug-section">
+    <h3>3. Strava 連接測試</h3>
+    <button onclick="testStravaConnection()">測試 Strava 連接</button>
+    <div id="stravaConnection"></div>
+  </div>
+
+  <div class="debug-section">
+    <h3>4. 同步狀態檢查</h3>
+    <button onclick="checkSyncStatus()">檢查同步狀態</button>
+    <div id="syncStatus"></div>
+  </div>
+
+  <div class="debug-section">
+    <h3>5. 手動同步測試</h3>
+    <button onclick="manualSyncTest()">手動同步測試</button>
+    <div id="manualSync"></div>
+  </div>
+
+  <div class="debug-section">
+    <h3>6. 日曆事件檢查</h3>
+    <button onclick="checkCalendarEvents()">檢查日曆事件</button>
+    <div id="calendarEvents"></div>
+  </div>
+
+  <div class="debug-section">
+    <h3>7. 調試日誌</h3>
+    <button onclick="clearLog()">清除日誌</button>
+    <div id="debugLog" class="log"></div>
+  </div>
+
+  <script src="../auth.js"></script>
+  <script>
+    let logContent = '';
+
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = `[${timestamp}] ${message}\n`;
+      logContent += logEntry;
+      document.getElementById('debugLog').textContent = logContent;
+      console.log(message);
+    }
+
+    function clearLog() {
+      logContent = '';
+      document.getElementById('debugLog').textContent = '';
+    }
+
+    function showStatus(elementId, message, type = 'info') {
+      const element = document.getElementById(elementId);
+      element.innerHTML = `<div class="status ${type}">${message}</div>`;
+    }
+
+    // 1. 基本狀態檢查
+    async function checkBasicStatus() {
+      log('開始基本狀態檢查...');
+      
+      const currentUser = localStorage.getItem('currentUser');
+      const username = localStorage.getItem('username');
+      const token = localStorage.getItem('token');
+      const stravaSyncEnabled = localStorage.getItem('stravaSyncEnabled');
+      
+      let status = `
+        <strong>用戶信息：</strong><br>
+        - 當前用戶: ${currentUser || '未設置'}<br>
+        - 用戶名: ${username || '未設置'}<br>
+        - 認證 Token: ${token ? '已設置' : '未設置'}<br>
+        - Strava 同步啟用: ${stravaSyncEnabled || '未設置'}<br><br>
+      `;
+
+      if (currentUser && username && token) {
+        status += '<div class="status success">✓ 基本認證信息完整</div>';
+      } else {
+        status += '<div class="status error">✗ 基本認證信息不完整</div>';
+      }
+
+      showStatus('basicStatus', status);
+      log('基本狀態檢查完成');
+    }
+
+    // 2. Token 狀態檢查
+    async function checkTokenStatus() {
+      log('開始 Token 狀態檢查...');
+      
+      const stravaAccessToken = localStorage.getItem('strava_access_token');
+      const stravaRefreshToken = localStorage.getItem('strava_refresh_token');
+      const stravaExpiresAt = localStorage.getItem('strava_expires_at');
+      
+      let status = `
+        <strong>Strava Token 信息：</strong><br>
+        - Access Token: ${stravaAccessToken ? '已設置' : '未設置'}<br>
+        - Refresh Token: ${stravaRefreshToken ? '已設置' : '未設置'}<br>
+        - 過期時間: ${stravaExpiresAt ? new Date(stravaExpiresAt * 1000).toLocaleString() : '未設置'}<br><br>
+      `;
+
+      if (window.tokenManager) {
+        try {
+          const isExpired = window.tokenManager.isTokenExpired();
+          status += `<div class="status ${isExpired ? 'error' : 'success'}">
+            ${isExpired ? '✗ Token 已過期' : '✓ Token 有效'}
+          </div>`;
+          
+          if (!isExpired) {
+            try {
+              const validToken = await window.tokenManager.getValidAccessToken();
+              status += `<div class="status success">✓ 成功獲取有效 Token: ${validToken ? validToken.substring(0, 20) + '...' : 'null'}</div>`;
+            } catch (error) {
+              status += `<div class="status error">✗ 獲取有效 Token 失敗: ${error.message}</div>`;
+            }
+          }
+        } catch (error) {
+          status += `<div class="status error">✗ Token 檢查失敗: ${error.message}</div>`;
+        }
+      } else {
+        status += '<div class="status error">✗ tokenManager 未載入</div>';
+      }
+
+      showStatus('tokenStatus', status);
+      log('Token 狀態檢查完成');
+    }
+
+    // 3. Strava 連接測試
+    async function testStravaConnection() {
+      log('開始 Strava 連接測試...');
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showStatus('stravaConnection', '<div class="status error">✗ 沒有認證 Token</div>');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/strava/activities', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 401) {
+          showStatus('stravaConnection', '<div class="status error">✗ Strava 權限已失效 (401)</div>');
+          log('Strava 連接測試失敗: 權限已失效');
+        } else if (response.ok) {
+          const data = await response.json();
+          const activityCount = data.activities ? data.activities.length : 0;
+          showStatus('stravaConnection', `
+            <div class="status success">✓ Strava 連接成功</div>
+            <div class="status info">活動數量: ${activityCount}</div>
+          `);
+          log(`Strava 連接測試成功，活動數量: ${activityCount}`);
+        } else {
+          showStatus('stravaConnection', `<div class="status error">✗ Strava 連接失敗: ${response.status}</div>`);
+          log(`Strava 連接測試失敗: ${response.status}`);
+        }
+      } catch (error) {
+        showStatus('stravaConnection', `<div class="status error">✗ Strava 連接錯誤: ${error.message}</div>`);
+        log(`Strava 連接測試錯誤: ${error.message}`);
+      }
+    }
+
+    // 4. 同步狀態檢查
+    async function checkSyncStatus() {
+      log('開始同步狀態檢查...');
+      
+      const stravaSyncEnabled = localStorage.getItem('stravaSyncEnabled') === 'true';
+      const currentUser = localStorage.getItem('currentUser');
+      const token = localStorage.getItem('token');
+      
+      let status = `
+        <strong>同步狀態：</strong><br>
+        - 本地同步啟用: ${stravaSyncEnabled ? '是' : '否'}<br>
+        - 用戶 ID: ${currentUser || '未設置'}<br>
+        - 認證 Token: ${token ? '已設置' : '未設置'}<br><br>
+      `;
+
+      if (currentUser && token) {
+        try {
+          const response = await fetch('/api/user-data', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            const cloudStravaSync = userData.stravaSyncEnabled || 
+                                   (userData.stravaSync && userData.stravaSync.enabled) ||
+                                   (userData.stravaSync && userData.stravaSync.syncEnabled);
+            
+            status += `<div class="status info">雲端同步狀態: ${cloudStravaSync ? '啟用' : '禁用'}</div>`;
+            
+            if (stravaSyncEnabled !== cloudStravaSync) {
+              status += '<div class="status warning">⚠ 本地與雲端同步狀態不一致</div>';
+            } else {
+              status += '<div class="status success">✓ 本地與雲端同步狀態一致</div>';
+            }
+          } else {
+            status += `<div class="status error">✗ 無法獲取雲端數據: ${response.status}</div>`;
+          }
+        } catch (error) {
+          status += `<div class="status error">✗ 雲端數據檢查失敗: ${error.message}</div>`;
+        }
+      } else {
+        status += '<div class="status error">✗ 缺少必要的認證信息</div>';
+      }
+
+      showStatus('syncStatus', status);
+      log('同步狀態檢查完成');
+    }
+
+    // 5. 手動同步測試
+    async function manualSyncTest() {
+      log('開始手動同步測試...');
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showStatus('manualSync', '<div class="status error">✗ 沒有認證 Token</div>');
+        return;
+      }
+
+      try {
+        // 模擬同步流程
+        log('1. 檢查 tokenManager...');
+        if (!window.tokenManager) {
+          throw new Error('tokenManager 未載入');
+        }
+
+        log('2. 檢查 token 是否過期...');
+        if (window.tokenManager.isTokenExpired()) {
+          log('Token 已過期，嘗試刷新...');
+          const refreshSuccess = await window.tokenManager.refreshToken();
+          if (!refreshSuccess) {
+            throw new Error('Token 刷新失敗');
+          }
+        }
+
+        log('3. 獲取有效 access token...');
+        const accessToken = await window.tokenManager.getValidAccessToken();
+        if (!accessToken) {
+          throw new Error('無法獲取有效的 access token');
+        }
+
+        log('4. 調用 Strava API...');
+        const response = await fetch('/api/strava/activities', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const activityCount = data.activities ? data.activities.length : 0;
+          showStatus('manualSync', `
+            <div class="status success">✓ 手動同步測試成功</div>
+            <div class="status info">獲取到 ${activityCount} 個活動</div>
+          `);
+          log(`手動同步測試成功，活動數量: ${activityCount}`);
+        } else {
+          throw new Error(`API 調用失敗: ${response.status}`);
+        }
+      } catch (error) {
+        showStatus('manualSync', `<div class="status error">✗ 手動同步測試失敗: ${error.message}</div>`);
+        log(`手動同步測試失敗: ${error.message}`);
+      }
+    }
+
+    // 6. 日曆事件檢查
+    async function checkCalendarEvents() {
+      log('開始日曆事件檢查...');
+      
+      const currentUser = localStorage.getItem('currentUser');
+      let events = {};
+      
+      if (currentUser) {
+        events = JSON.parse(localStorage.getItem(`calendarEvents_${currentUser}`) || '{}');
+      } else {
+        events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+      }
+
+      const eventDates = Object.keys(events);
+      const totalEvents = eventDates.reduce((sum, date) => sum + events[date].length, 0);
+      
+      // 統計 Strava 活動
+      let stravaActivities = 0;
+      let stravaDates = [];
+      
+      eventDates.forEach(date => {
+        events[date].forEach(event => {
+          if (event.source === 'Strava') {
+            stravaActivities++;
+            if (!stravaDates.includes(date)) {
+              stravaDates.push(date);
+            }
+          }
+        });
+      });
+
+      const status = `
+        <strong>日曆事件統計：</strong><br>
+        - 總事件數量: ${totalEvents}<br>
+        - 有事件的日期: ${eventDates.length}<br>
+        - Strava 活動數量: ${stravaActivities}<br>
+        - Strava 活動日期: ${stravaDates.length}<br><br>
+        
+        <strong>最近 5 個 Strava 活動：</strong><br>
+        ${stravaDates.slice(0, 5).map(date => {
+          const stravaEvents = events[date].filter(e => e.source === 'Strava');
+          return `${date}: ${stravaEvents.map(e => `${e.type} ${e.distance}km`).join(', ')}`;
+        }).join('<br>') || '無'}
+      `;
+
+      showStatus('calendarEvents', status);
+      log('日曆事件檢查完成');
+    }
+
+    // 頁面載入時自動檢查
+    document.addEventListener('DOMContentLoaded', () => {
+      log('調試頁面已載入');
+      setTimeout(() => {
+        checkBasicStatus();
+        checkTokenStatus();
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
